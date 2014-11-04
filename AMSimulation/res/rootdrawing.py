@@ -330,11 +330,13 @@ def getMaximum(histos):
         maxima.append(h.h.GetMaximum())
     return max(maxima)
 
-def save(imgdir, imgname):
+def save(imgdir, imgname, dot_root=False):
     gPad.RedrawAxis()
     #gPad.Modified(); gPad.Update()
     gPad.Print(imgdir+imgname+".pdf")
     gPad.Print(imgdir+imgname+".png")
+    if dot_root:
+        gPad.Print(imgdir+imgname+".root")
 
 # ______________________________________________________________________________
 # I/O

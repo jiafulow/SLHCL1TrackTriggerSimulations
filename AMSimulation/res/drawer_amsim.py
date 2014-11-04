@@ -9,7 +9,7 @@ import os
 
 samples = {}
 samples["nu140"     ] = False
-samples["tt27"      ] = False
+samples["tt27"      ] = True
 samples["tt27_nu140"] = False
 
 sections = {}
@@ -23,30 +23,35 @@ gStyle.SetPalette(55)  # rainbow color map
 
 EOS = "/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_results/"
 RES = "SingleMuPlusMinus_sp16_%s"
-RES = "SingleElePlusMinus_sp16_%s"
-RES = "SingleKaonPlusMinus_sp16_%s"
+#RES = "SingleElePlusMinus_sp16_%s"
 #RES = "SinglePionPlusMinus_sp16_%s"
+#RES = "SingleKaonPlusMinus_sp16_%s"
+
+DATE = "20140926"
 
 settings = [
-    ("ss256_20140926"     ,  87631104),
+    ("ss256"  ,  87631104),
 ]
 
-settings_barrel = [
-    ("ss1024_20140821"    ,   478317),
-    ("ss512_20140821"     ,  1380003),
-    ("ss256_20140821"     ,  4101108),
-    ("ss128_20140821"     , 11580865),
-    ("ss64_20140821"      , 28988201),
-    ("ss32_20140821"      , 64656668),
+settings_tt27 = [
+    ("ss1024" ,   479095),
+    ("ss512"  ,  1382352),
+    ("ss256"  ,  4109588),
+    ("ss128"  , 11612095),
+    ("ss64"   , 29093132),
+    ("ss32"   , 64981077),
 ]
 
 col  = TColor.GetColor("#1f78b4")  # Paired
 fcol = TColor.GetColor("#a6cee3")
 imgdir = "figures_amsim/"
+#imgdir = "figures_amsim/ele/"
+#imgdir = "figures_amsim/pion/"
+#imgdir = "figures_amsim/kaon/"
 
 if samples["tt27"]:
-    RES = "SingleMuPlusMinus_Barrel_sp16_%s"
-    settings = settings_barrel
+    RES = "SingleMuPlusMinus_sp16_%s_tt27"
+    settings = settings_tt27
     imgdir = "figures_amsim_tt27/"
 
 if samples["nu140"]:
@@ -59,8 +64,8 @@ if samples["nu140"]:
 
 if samples["tt27_nu140"]:
     EOS = EOS.replace("_results","_results_PU140bx25")
-    RES = "Neutrino_Barrel_sp16_%s"
-    settings = settings_barrel
+    RES = "Neutrino_sp16_%s_tt27"
+    settings = settings_tt27
 
     col = TColor.GetColor("#e31a1c")  # Paired
     fcol = TColor.GetColor("#fb9a99")
@@ -102,13 +107,16 @@ if sections["coverage"]:
 
         # 1D: pt, pt (zoom), eta, phi, vz
         ytitle = "coverage"
-        ac_ytitle = "acceptance"
+        # NOTE: what is previously called "acceptance" has been changed to "AM PR efficiency"
+        #       but the "ac_" prefix is still used in code
+        #ac_ytitle = "acceptance"
+        ac_ytitle = "#epsilon_{AM PR}"
         for i in xrange(3):
             hname = "pt_%i" % i
             histos[hname] = TProfile(hname, "; p_{T} [GeV]; %s" % ytitle, 100, 0., 200., 0., 2., "")
             histos["ac_"+hname] = TProfile("ac_"+hname, "; p_{T} [GeV]; %s" % ac_ytitle, 100, 0., 200., 0., 2., "")
 
-            hname = "ppt_%i" % i
+            hname = "ppt_%i" % i  # like the above pt histo, but zoomed in to 0-5 GeV
             histos[hname] = TProfile(hname, "; p_{T} [GeV]; %s" % ytitle, 100, 0., 5., 0., 2., "")
             histos["ac_"+hname] = TProfile("ac_"+hname, "; p_{T} [GeV]; %s" % ac_ytitle, 100, 0., 5., 0., 2., "")
 
@@ -124,11 +132,21 @@ if sections["coverage"]:
             histos[hname] = TProfile(hname, "; vertex z_{0} [cm]; %s" % ytitle, 120, -30, 30, 0., 2., "")
             histos["ac_"+hname] = TProfile("ac_"+hname, "; vertex z_{0} [cm]; %s" % ac_ytitle, 120, -30, 30, 0., 2., "")
 
+        colors1 = blkrgb[:3]
+        colors2 = blkrgb[:1] + blkrgb[3:]
         for k, v in histos.iteritems():
-            i = int(v.GetName()[-1])
             v.SetLineWidth(2); v.SetFillStyle(0)
             v.SetMarkerStyle(24); v.SetMarkerSize(0.9)
-            v.SetMarkerColor(blkrgb[i % 3]); v.SetLineColor(blkrgb[i % 3])
+
+            hname = v.GetName()
+            i = int(hname[-1])
+            hname = hname[:-2]
+            if hname.startswith("ac_"):
+                hname = hname[3:]
+            if hname in ["pt", "ppt"]:
+                v.SetMarkerColor(colors1[i % 3]); v.SetLineColor(colors1[i % 3])
+            else:
+                v.SetMarkerColor(colors2[i % 3]); v.SetLineColor(colors2[i % 3])
 
         # 2D: eta-phi
         for i in xrange(3):
@@ -146,8 +164,8 @@ if sections["coverage"]:
         tree.SetBranchStatus("TTStubs_modId"         , 1)
         tree.SetBranchStatus("AMTTRoads_nHitLayers"  , 1)
 
-        def fill(pt, eta, phi, vz, cover, trigger):
-            if cover:
+        def fill(pt, eta, phi, vz, accept, trigger):
+            if accept:
                 if abs(eta) < 0.8:
                     histos["pt_0"     + val].Fill(pt , trigger)
                     histos["ppt_0"    + val].Fill(pt , trigger)
@@ -224,9 +242,13 @@ if sections["coverage"]:
                 mlay = layermap[lay]
                 found_mlayers[mlay] = 1
             count_mlayers = sum(found_mlayers)
-            cover = (count_mlayers == 6)
+            accept = (count_mlayers == 6)
 
-            fill(thePt, theEta, thePhi, theVz, cover, trigger)
+            if accept:
+                # FIXME: need to apply trigger tower acceptance cut here
+                pass
+
+            fill(thePt, theEta, thePhi, theVz, accept, trigger)
 
         tree.SetBranchStatus("*", 1)
         return
@@ -296,7 +318,7 @@ if sections["coverage"]:
 
             latex.DrawLatex(0.6, 0.185, "%s [%.1fM bank]" % (setting, banksize))
             CMS_label()
-            save(imgdir, "coverage_%s_%s" % (hnlambda(hname), setting))
+            save(imgdir, "coverage_%s_%s" % (hnlambda(hname), setting), dot_root=True)
 
         # TH2F
         oldRightMargin = gPad.GetRightMargin()
@@ -308,7 +330,7 @@ if sections["coverage"]:
 
         latex.DrawLatex(0.6, 0.235, "20 #leq p_{T} < #infty  GeV")
         latex.DrawLatex(0.6, 0.185, "%s [%.1fM bank]" % (setting, banksize))
-        save(imgdir, "coverage_%s_%s" % (hnlambda(hname), setting))
+        save(imgdir, "coverage_%s_%s" % (hnlambda(hname), setting), dot_root=True)
 
         gPad.SetRightMargin(oldRightMargin)
         donotdelete = [tboxes]
@@ -319,7 +341,7 @@ if sections["coverage"]:
     for sett, sett1 in settings[:]:
         chain.Reset()
 
-        result = RES % sett
+        result = (RES % sett) + ("_%s" % DATE)
         infiles = listdir_fullpath(EOS+"/"+result)
         print sett, len(infiles)
         for f in infiles:
@@ -327,10 +349,11 @@ if sections["coverage"]:
 
         histos = bookCoverage()
         projectCoverage(chain, histos, nentries=nentries)
-        setting = sett[:-9].replace("_", " ")
+        setting = sett.replace("_", " ")
         banksize = 1e-6*sett1
         drawCoverage(histos, setting, banksize, lambda x: x, imgdir)
         drawCoverage(histos, setting, banksize, lambda x: "ac_"+x, imgdir)
+        histos.clear()
 
 
 # ______________________________________________________________________________
@@ -422,14 +445,14 @@ if sections["roads"]:
         for hname, h in histos.iteritems():
             draw([h], ytitle="", logy=logy)
             latex.DrawLatex(0.6, 0.185, "%s [%.1fM bank]" % (setting, banksize))
-            save(imgdir, "roads_%s_%s" % (hname, setting))
+            save(imgdir, "roads_%s_%s" % (hname, setting), dot_root=True)
 
 
     # __________________________________________________________________________
     for sett, sett1 in settings[:]:
         chain.Reset()
 
-        result = RES % sett
+        result = (RES % sett) + ("_%s" % DATE)
         infiles = listdir_fullpath(EOS+"/"+result)
         print sett, len(infiles)
         for f in infiles:
@@ -437,6 +460,7 @@ if sections["roads"]:
 
         histos = bookRoads()
         projectRoads(chain, histos, nentries=nentries/1000)
-        setting = sett[:-9].replace("_", " ")
+        setting = sett.replace("_", " ")
         banksize = 1e-6*sett1
         drawRoads(histos, setting, banksize, imgdir, logy=True)
+        histos.clear()

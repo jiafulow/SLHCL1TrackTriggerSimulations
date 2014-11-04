@@ -74,17 +74,17 @@ int PatternGenerator::makePatterns_fas(TString src) {
         tchain->SetBranchStatus("*"                 , 0);
       //tchain->SetBranchStatus("TTStubs_x"         , 1);
       //tchain->SetBranchStatus("TTStubs_y"         , 1);
-      //tchain->SetBranchStatus("TTStubs_z"         , 1);
-      //tchain->SetBranchStatus("TTStubs_r"         , 1);
+        tchain->SetBranchStatus("TTStubs_z"         , 1);
+        tchain->SetBranchStatus("TTStubs_r"         , 1);
       //tchain->SetBranchStatus("TTStubs_eta"       , 1);
-      //tchain->SetBranchStatus("TTStubs_phi"       , 1);
+        tchain->SetBranchStatus("TTStubs_phi"       , 1);
         tchain->SetBranchStatus("TTStubs_coordx"    , 1);
         tchain->SetBranchStatus("TTStubs_coordy"    , 1);
       //tchain->SetBranchStatus("TTStubs_roughPt"   , 1);
       //tchain->SetBranchStatus("TTStubs_trigBend"  , 1);
         tchain->SetBranchStatus("TTStubs_modId"     , 1);
       //tchain->SetBranchStatus("TTStubs_trkId"     , 1);
-      //tchain->SetBranchStatus("genParts_pt"       , 1);
+        tchain->SetBranchStatus("genParts_pt"       , 1);
       //tchain->SetBranchStatus("genParts_eta"      , 1);
       //tchain->SetBranchStatus("genParts_phi"      , 1);
       //tchain->SetBranchStatus("genParts_vx"       , 1);
@@ -93,9 +93,16 @@ int PatternGenerator::makePatterns_fas(TString src) {
       //tchain->SetBranchStatus("genParts_charge"   , 1);
     }
 
-    const id_type& caloSuperstrip = arbiter_ -> superstrip(25, 0, 0, 0, 0);
-    const id_type& muonSuperstrip = arbiter_ -> superstrip(26, 0, 0, 0, 0);
-    const id_type& fakeSuperstrip = arbiter_ -> superstrip(27, 0, 0, 0, 0);
+    id_type caloSuperstrip, muonSuperstrip, fakeSuperstrip;
+    if (po.mode == 2) {  // luciano superstrip
+        caloSuperstrip = arbiter_ -> superstrip_luciano(25, 0, 0, po.unitPhi, po.unitZ);
+        muonSuperstrip = arbiter_ -> superstrip_luciano(26, 0, 0, po.unitPhi, po.unitZ);
+        fakeSuperstrip = arbiter_ -> superstrip_luciano(27, 0, 0, po.unitPhi, po.unitZ);
+    } else {
+        caloSuperstrip = arbiter_ -> superstrip(25, 0, 0, 0, 0);
+        muonSuperstrip = arbiter_ -> superstrip(26, 0, 0, 0, 0);
+        fakeSuperstrip = arbiter_ -> superstrip(27, 0, 0, 0, 0);
+    }
 
     // Allocate memory
     allPatterns_fas_.init(0);  // automatic memory allocation
@@ -144,6 +151,12 @@ int PatternGenerator::makePatterns_fas(TString src) {
             return 1;
         }
 
+        float simPt = reader.vp_pt->front();
+        if (simPt < po.minPt || po.maxPt < simPt) {
+            ++nRead;
+            continue;
+        }
+
         // _____________________________________________________________________
         // Start generating patterns
         bool keep = true;
@@ -154,7 +167,8 @@ int PatternGenerator::makePatterns_fas(TString src) {
         patt.at(7) = muonSuperstrip;  // dummy for now
 
         // Quick loop over reconstructed stubs
-        id_type moduleId, lay, lad, mod, col, row;  // declare the usual suspects
+        id_type ssId, moduleId, lay, lad, mod, col, row;  // declare the usual suspects
+        float stub_r, stub_phi, stub_z;
         for (unsigned l=0; (l<nstubs) && keep; ++l) {
             moduleId = reader.vb_modId->at(l);
 
@@ -217,8 +231,17 @@ int PatternGenerator::makePatterns_fas(TString src) {
             col = halfStripRound(reader.vb_coordy->at(l));
             row = halfStripRound(reader.vb_coordx->at(l));
 
+            // global r, phi, z
+            stub_r = reader.vb_r->at(l);
+            stub_phi = reader.vb_phi->at(l);
+            stub_z = reader.vb_z->at(l);
+
             // Find superstrip address
-            const id_type& ssId = arbiter_ -> superstrip(lay, lad, mod, col, row);
+            if (po.mode == 2) {  // luciano superstrip
+                ssId = arbiter_ -> superstrip_luciano(lay, stub_phi, stub_z, po.unitPhi, po.unitZ);
+            } else {
+                ssId = arbiter_ -> superstrip(lay, lad, mod, col, row);
+            }
             patt.at(k) = ssId;
 
             // Find associated trigger towers

@@ -1,21 +1,14 @@
 #ifndef AMSimulation_TrackFitter_h_
 #define AMSimulation_TrackFitter_h_
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTPattern.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterOption.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgo.h"
 using namespace slhcl1tt;
 
-#include "TChain.h"
-#include "TFile.h"
-#include "TFileCollection.h"
-#include "TROOT.h"
-#include "TString.h"
-
 
 // This code is entirely based on [lucamartini/CMS](https://github.com/lucamartini/CMS)
+// but currently in a BROKEN state
 
 // SETTINGS: resolution for pq, pqType, etc
 // INPUT   : Roads
@@ -46,20 +39,15 @@ class TrackFitter {
     // none
 
     // Functions
-    int readFile(TString src);
-
-    int makeTracks(TString out);
+    int makeTracks(TString src, TString out);
 
     // Main driver
     int run(TString src, TString out);
 
 
-  public:
-    // Configurations
-    const TrackFitterOption po;
-
   private:
     // Configurations
+    const TrackFitterOption po;
     const unsigned nLayers_;
     const TString prefixRoad_;
     const TString prefixTrack_;
@@ -69,9 +57,6 @@ class TrackFitter {
     long long nEvents_;
     int maxTracks_;  // max number of tracks per event
     int verbose_;
-
-    // Containers
-    TChain * chain_;
 };
 
 #endif

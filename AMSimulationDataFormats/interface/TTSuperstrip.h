@@ -21,25 +21,26 @@ struct TTSuperstrip {
 // Nominally, it corresponds to the smallest unit of measurement in the detector.
 // A POD type is used to reduce memory consumption.
 struct TTHit {
-    float x;
-    float y;
+    float r;
+    float phi;
     float z;
-    float xError;
-    float yError;
+    float rError;
+    float phiError;
     float zError;
     int charge;
     float pt;
     id_type  superstripId;
+    int trkId;
 
     // Functions
     // Simple trigonometrics
-    float rho()                     const { return std::sqrt(x*x + y*y); }
-    float phi()                     const { return std::atan2(y, x); }
-    float theta()                   const { return std::atan2(rho(), z); }
+    float x()                       const { return r * std::cos(phi); }
+    float y()                       const { return r * std::sin(phi); }
+    float theta()                   const { return std::atan2(r, z); }
 
     // Conformal transformantion
-    float u()                       const { return x / (x*x + y*y); }
-    float v()                       const { return y / (x*x + y*y); }
+    float u()                       const { return x() / (r*r); }
+    float v()                       const { return y() / (r*r); }
 };
 
 

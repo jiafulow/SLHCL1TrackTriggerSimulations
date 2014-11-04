@@ -3,7 +3,9 @@
 
 #include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTPattern.h"
 
+#include "TChain.h"
 #include "TFile.h"
+#include "TFileCollection.h"
 #include "TROOT.h"
 #include "TTree.h"
 #include "TString.h"
@@ -19,11 +21,41 @@ class TTRoadReader {
     TTRoadReader(int verbose=1);
     ~TTRoadReader();
 
-    // FIXME: implement this
+    int init(TString src, TString prefix, TString suffix);
+
+    Long64_t loadTree(Long64_t entry);
+
+    Int_t getEntry(Long64_t entry);
+
+    TChain* getChain() { return tchain; }
+
+    // Roads
+    std::vector<count_type> *               vr_nHitLayers;
+    std::vector<id_type> *                  vr_bankIndex;
+    //
+    std::vector<std::vector<float> > *      vr_hitRs;
+    std::vector<std::vector<float> > *      vr_hitPhis;
+    std::vector<std::vector<float> > *      vr_hitZs;
+    std::vector<std::vector<float> > *      vr_hitRErrors;
+    std::vector<std::vector<float> > *      vr_hitPhiErrors;
+    std::vector<std::vector<float> > *      vr_hitZErrors;
+    std::vector<std::vector<int> > *        vr_hitCharges;
+    std::vector<std::vector<float> > *      vr_hitPts;
+    std::vector<std::vector<id_type> > *    vr_hitSuperstripIds;
+    std::vector<std::vector<int> > *        vr_hitTrkIds;
+
+    // genParticle info
+    std::vector<float> * vp_pt;
+    std::vector<float> * vp_eta;
+    std::vector<float> * vp_phi;
+    std::vector<float> * vp_vx;
+    std::vector<float> * vp_vy;
+    std::vector<float> * vp_vz;
+    std::vector<int> *   vp_charge;
 
   private:
-    TFile* tfile;
-    TTree* ttree;
+    TChain* tchain;
+    int treenumber;
     const int verbose_;
 };
 
@@ -45,26 +77,28 @@ class TTRoadWriter {
     std::auto_ptr<std::vector<count_type> >               vr_nHitLayers;
     std::auto_ptr<std::vector<id_type> >                  vr_bankIndex;
     //
-    std::auto_ptr<std::vector<std::vector<float> > >      vr_hitXs;
-    std::auto_ptr<std::vector<std::vector<float> > >      vr_hitYs;
+    std::auto_ptr<std::vector<std::vector<float> > >      vr_hitRs;
+    std::auto_ptr<std::vector<std::vector<float> > >      vr_hitPhis;
     std::auto_ptr<std::vector<std::vector<float> > >      vr_hitZs;
-    std::auto_ptr<std::vector<std::vector<float> > >      vr_hitXErrors;
-    std::auto_ptr<std::vector<std::vector<float> > >      vr_hitYErrors;
+    std::auto_ptr<std::vector<std::vector<float> > >      vr_hitRErrors;
+    std::auto_ptr<std::vector<std::vector<float> > >      vr_hitPhiErrors;
     std::auto_ptr<std::vector<std::vector<float> > >      vr_hitZErrors;
     std::auto_ptr<std::vector<std::vector<int> > >        vr_hitCharges;
     std::auto_ptr<std::vector<std::vector<float> > >      vr_hitPts;
     std::auto_ptr<std::vector<std::vector<id_type> > >    vr_hitSuperstripIds;
+    std::auto_ptr<std::vector<std::vector<int> > >        vr_hitTrkIds;
 
     // Roads (inner vectors)
-    std::vector<float>      hitXs;
-    std::vector<float>      hitYs;
+    std::vector<float>      hitRs;
+    std::vector<float>      hitPhis;
     std::vector<float>      hitZs;
-    std::vector<float>      hitXErrors;
-    std::vector<float>      hitYErrors;
+    std::vector<float>      hitRErrors;
+    std::vector<float>      hitPhiErrors;
     std::vector<float>      hitZErrors;
     std::vector<int>        hitCharges;
     std::vector<float>      hitPts;
     std::vector<id_type>    hitSuperstripIds;
+    std::vector<int>        hitTrkIds;
 
     // In addition, keep genParticle info
     std::auto_ptr<std::vector<float> > vp_pt;
@@ -83,4 +117,3 @@ class TTRoadWriter {
 }  // namespace slhcl1tt
 
 #endif
-

@@ -32,10 +32,10 @@ class PatternMatcher {
         assert(nDCBits_ <= 4);
 
         // Decide on the size of superstrip
-        if (po.useVariableSize)
-            arbiter_ = new SuperstripArbiter(po.subLadderVarSize, po.subModuleVarSize, po.subLadderECVarSize, po.subModuleECVarSize);
-        else
+        if (po.mode == 0)
             arbiter_ = new SuperstripArbiter(po.subLadderSize, po.subModuleSize);
+        else
+            arbiter_ = new SuperstripArbiter(po.subLadderVarSize, po.subModuleVarSize, po.subLadderECVarSize, po.subModuleECVarSize);
     }
 
     // Destructor

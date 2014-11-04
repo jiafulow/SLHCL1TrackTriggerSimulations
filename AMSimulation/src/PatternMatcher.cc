@@ -24,7 +24,13 @@ int PatternMatcher::makeRoads_fas(TString src, TString bank, TString out) {
     if (npatterns > maxPatterns_)
         npatterns = maxPatterns_;
 
-    const id_type& fakeSuperstrip = arbiter_ -> superstrip(27, 0, 0, 0, 0);
+    id_type fakeSuperstrip;
+    if (po.mode == 2) {  // luciano superstrip
+        fakeSuperstrip = arbiter_ -> superstrip_luciano(27, 0, 0, po.unitPhi, po.unitZ);
+    } else {
+        fakeSuperstrip = arbiter_ -> superstrip(27, 0, 0, 0, 0);
+    }
+
     id_type nsuperstrips = fakeSuperstrip + 1;
     if (nsuperstrips & 1) nsuperstrips += 1;  // if odd, make it even
 
@@ -95,18 +101,18 @@ int PatternMatcher::makeRoads_fas(TString src, TString bank, TString out) {
     } else {
         TChain* tchain = reader.getChain();
         tchain->SetBranchStatus("*"                 , 0);
-        tchain->SetBranchStatus("TTStubs_x"         , 1);
-        tchain->SetBranchStatus("TTStubs_y"         , 1);
+      //tchain->SetBranchStatus("TTStubs_x"         , 1);
+      //tchain->SetBranchStatus("TTStubs_y"         , 1);
         tchain->SetBranchStatus("TTStubs_z"         , 1);
-      //tchain->SetBranchStatus("TTStubs_r"         , 1);
+        tchain->SetBranchStatus("TTStubs_r"         , 1);
       //tchain->SetBranchStatus("TTStubs_eta"       , 1);
-      //tchain->SetBranchStatus("TTStubs_phi"       , 1);
+        tchain->SetBranchStatus("TTStubs_phi"       , 1);
         tchain->SetBranchStatus("TTStubs_coordx"    , 1);
         tchain->SetBranchStatus("TTStubs_coordy"    , 1);
         tchain->SetBranchStatus("TTStubs_roughPt"   , 1);
         tchain->SetBranchStatus("TTStubs_trigBend"  , 1);
         tchain->SetBranchStatus("TTStubs_modId"     , 1);
-      //tchain->SetBranchStatus("TTStubs_trkId"     , 1);
+        tchain->SetBranchStatus("TTStubs_trkId"     , 1);
         tchain->SetBranchStatus("genParts_pt"       , 1);
         tchain->SetBranchStatus("genParts_eta"      , 1);
         tchain->SetBranchStatus("genParts_phi"      , 1);
@@ -168,8 +174,8 @@ int PatternMatcher::makeRoads_fas(TString src, TString bank, TString out) {
         //std::fill(superstripBooleans.begin(), superstripBooleans.end(), false);
 
         // Loop over reconstructed stubs
-        id_type moduleId, lay, lad, mod, col, row;  // declare the usual suspects
-        float stub_x, stub_y, stub_z, stub_pt;
+        id_type ssId, moduleId, lay, lad, mod, col, row;  // declare the usual suspects
+        float stub_r, stub_phi, stub_z, stub_pt;
         for (unsigned l=0; l<nstubs; ++l) {
 
             // Break moduleId into lay, lad, mod
@@ -183,6 +189,12 @@ int PatternMatcher::makeRoads_fas(TString src, TString bank, TString out) {
             col = halfStripRound(reader.vb_coordy->at(l));
             row = halfStripRound(reader.vb_coordx->at(l));
 
+            // global r, phi, z
+            stub_r = reader.vb_r->at(l);
+            stub_phi = reader.vb_phi->at(l);
+            stub_z = reader.vb_z->at(l);
+            stub_pt = reader.vb_roughPt->at(l);
+
             // Skip if moduleId not in any trigger tower
             if (po.requireTriggerTower && triggerTowerReverseMap_.find(moduleId) == triggerTowerReverseMap_.end()) {
                 if (verbose_>2)  std::cout << Debug() << "... ... skip moduleId: " << moduleId << " not in any trigger tower." << std::endl;
@@ -190,16 +202,15 @@ int PatternMatcher::makeRoads_fas(TString src, TString bank, TString out) {
             }
 
             // Find superstrip address
-            const id_type& ssId = arbiter_ -> superstrip(lay, lad, mod, col, row);
-
-            // Position and rough pt
-            stub_x = reader.vb_x->at(l);
-            stub_y = reader.vb_y->at(l);
-            stub_z = reader.vb_z->at(l);
-            stub_pt = reader.vb_roughPt->at(l);
+            if (po.mode == 2) {  // luciano superstrip
+                ssId = arbiter_ -> superstrip_luciano(lay, stub_phi, stub_z, po.unitPhi, po.unitZ);
+            } else {
+                ssId = arbiter_ -> superstrip(lay, lad, mod, col, row);
+            }
 
             // Create a hit
-            superstripHitsMap[ssId].emplace_back(TTHit{stub_x, stub_y, stub_z, 0., 0., 0., -1, stub_pt, ssId});  // POD type constructor
+            const int& trkId = reader.vb_trkId->at(l);
+            superstripHitsMap[ssId].emplace_back(TTHit{stub_r, stub_phi, stub_z, 0., 0., 0., -1, stub_pt, ssId, trkId});  // POD type constructor
 
             // Make a tick
             //superstripBooleans.at(ssId) = true;

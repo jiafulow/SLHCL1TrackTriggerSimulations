@@ -74,7 +74,7 @@ ssBase6     = TColor.GetColor("#EAFDE3")
 
 #blkrgb      = (kBlack, kBlue, kRed, kGreen)
 #blkrgb      = (kBlack, kNavy2, kMaroon2, kLime2)
-blkrgb       = map(lambda x: TColor.GetColor(x), ("#333333", "#0571b0", "#ca0020", "#008837"))
+blkrgb       = map(lambda x: TColor.GetColor(x), ("#333333", "#0571b0", "#ca0020", "#008837", "#7b3294", "#e66101"))
 
 # Very nice color palette stolen from tkgeometry
 # https://code.google.com/p/tkgeometry/source/browse/trunk/src/Palette.cc
