@@ -109,7 +109,7 @@ int PatternMatcher::makeRoads_fas(TString src, TString bank, TString out) {
         tchain->SetBranchStatus("TTStubs_phi"       , 1);
         tchain->SetBranchStatus("TTStubs_coordx"    , 1);
         tchain->SetBranchStatus("TTStubs_coordy"    , 1);
-        tchain->SetBranchStatus("TTStubs_roughPt"   , 1);
+      //tchain->SetBranchStatus("TTStubs_roughPt"   , 1);
         tchain->SetBranchStatus("TTStubs_trigBend"  , 1);
         tchain->SetBranchStatus("TTStubs_modId"     , 1);
         tchain->SetBranchStatus("TTStubs_trkId"     , 1);
@@ -175,7 +175,7 @@ int PatternMatcher::makeRoads_fas(TString src, TString bank, TString out) {
 
         // Loop over reconstructed stubs
         id_type ssId, moduleId, lay, lad, mod, col, row;  // declare the usual suspects
-        float stub_r, stub_phi, stub_z, stub_pt;
+        float stub_r, stub_phi, stub_z, stub_trigBend;
         for (unsigned l=0; l<nstubs; ++l) {
 
             // Break moduleId into lay, lad, mod
@@ -193,13 +193,13 @@ int PatternMatcher::makeRoads_fas(TString src, TString bank, TString out) {
             stub_r = reader.vb_r->at(l);
             stub_phi = reader.vb_phi->at(l);
             stub_z = reader.vb_z->at(l);
-            stub_pt = reader.vb_roughPt->at(l);
+            stub_trigBend = reader.vb_trigBend->at(l);
 
-            // Skip if moduleId not in any trigger tower
-            if (po.requireTriggerTower && triggerTowerReverseMap_.find(moduleId) == triggerTowerReverseMap_.end()) {
-                if (verbose_>2)  std::cout << Debug() << "... ... skip moduleId: " << moduleId << " not in any trigger tower." << std::endl;
-                continue;
-            }
+            //// Skip if moduleId not in any trigger tower
+            //if (po.requireTriggerTower && triggerTowerReverseMap_.find(moduleId) == triggerTowerReverseMap_.end()) {
+            //    if (verbose_>2)  std::cout << Debug() << "... ... skip moduleId: " << moduleId << " not in any trigger tower." << std::endl;
+            //    continue;
+            //}
 
             // Find superstrip address
             if (po.mode == 2) {  // luciano superstrip
@@ -210,7 +210,7 @@ int PatternMatcher::makeRoads_fas(TString src, TString bank, TString out) {
 
             // Create a hit
             const int& trkId = reader.vb_trkId->at(l);
-            superstripHitsMap[ssId].emplace_back(TTHit{stub_r, stub_phi, stub_z, 0., 0., 0., -1, stub_pt, ssId, trkId});  // POD type constructor
+            superstripHitsMap[ssId].emplace_back(TTHit{stub_r, stub_phi, stub_z, 0., 0., 0., 0., stub_trigBend, ssId, trkId});  // POD type constructor
 
             // Make a tick
             //superstripBooleans.at(ssId) = true;
@@ -252,7 +252,7 @@ int PatternMatcher::makeRoads_fas(TString src, TString bank, TString out) {
             hitses.clear();
             hits.clear();
 
-            for (unsigned i=0; i<MAX_NLAYERS; ++i, ++itss) {
+            for (unsigned i=0; i<nLayers_; ++i, ++itss) {
                 const id_type& ssId = *itss;
                 if (ssId == fas::bad_4byte)  continue;
 

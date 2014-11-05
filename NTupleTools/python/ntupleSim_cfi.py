@@ -24,6 +24,23 @@ ntupleSimBeamSpot = cms.EDProducer('NTupleSimBeamSpot',
     maxN = cms.uint32(999999)
 )
 
+#ntuplePSimHitsBarrelLowTof = cms.EDProducer('NTuplePSimHits',
+#    inputTag = cms.InputTag("g4SimHits","TrackerHitsPixelBarrelLowTof"),
+#    prefix = cms.string('psimHitsBarrelLowTof@'),
+#    suffix = cms.string(''),
+#    cut = cms.string(''),
+#    maxN = cms.uint32(999999)
+#)
+#
+#ntuplePSimHitsEndcapLowTof = cms.EDProducer('NTuplePSimHits',
+#    inputTag = cms.InputTag("g4SimHits","TrackerHitsPixelEndcapLowTof"),
+#    prefix = cms.string('psimHitsEndcapLowTof@'),
+#    suffix = cms.string(''),
+#    cut = cms.string(''),
+#    maxN = cms.uint32(999999)
+#)
+
+
 #ntupleSim = cms.Sequence(ntupleSimTracks * ntupleSimVertices * ntupleSimBeamSpot)
 ntupleSim = cms.Sequence(ntupleSimTracks * ntupleSimVertices)
 

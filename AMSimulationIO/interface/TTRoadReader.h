@@ -30,7 +30,7 @@ class TTRoadReader {
     TChain* getChain() { return tchain; }
 
     // Roads
-    std::vector<count_type> *               vr_nHitLayers;
+    std::vector<count_type> *               vr_nSuperstrips;
     std::vector<id_type> *                  vr_bankIndex;
     //
     std::vector<std::vector<float> > *      vr_hitRs;
@@ -39,8 +39,8 @@ class TTRoadReader {
     std::vector<std::vector<float> > *      vr_hitRErrors;
     std::vector<std::vector<float> > *      vr_hitPhiErrors;
     std::vector<std::vector<float> > *      vr_hitZErrors;
-    std::vector<std::vector<int> > *        vr_hitCharges;
-    std::vector<std::vector<float> > *      vr_hitPts;
+    std::vector<std::vector<float> > *      vr_hitClusWidths;
+    std::vector<std::vector<float> > *      vr_hitStubWidths;
     std::vector<std::vector<id_type> > *    vr_hitSuperstripIds;
     std::vector<std::vector<int> > *        vr_hitTrkIds;
 
@@ -74,7 +74,7 @@ class TTRoadWriter {
 
   private:
     // Roads
-    std::auto_ptr<std::vector<count_type> >               vr_nHitLayers;
+    std::auto_ptr<std::vector<count_type> >               vr_nSuperstrips;
     std::auto_ptr<std::vector<id_type> >                  vr_bankIndex;
     //
     std::auto_ptr<std::vector<std::vector<float> > >      vr_hitRs;
@@ -83,8 +83,8 @@ class TTRoadWriter {
     std::auto_ptr<std::vector<std::vector<float> > >      vr_hitRErrors;
     std::auto_ptr<std::vector<std::vector<float> > >      vr_hitPhiErrors;
     std::auto_ptr<std::vector<std::vector<float> > >      vr_hitZErrors;
-    std::auto_ptr<std::vector<std::vector<int> > >        vr_hitCharges;
-    std::auto_ptr<std::vector<std::vector<float> > >      vr_hitPts;
+    std::auto_ptr<std::vector<std::vector<float> > >      vr_hitClusWidths;
+    std::auto_ptr<std::vector<std::vector<float> > >      vr_hitStubWidths;
     std::auto_ptr<std::vector<std::vector<id_type> > >    vr_hitSuperstripIds;
     std::auto_ptr<std::vector<std::vector<int> > >        vr_hitTrkIds;
 
@@ -95,8 +95,8 @@ class TTRoadWriter {
     std::vector<float>      hitRErrors;
     std::vector<float>      hitPhiErrors;
     std::vector<float>      hitZErrors;
-    std::vector<int>        hitCharges;
-    std::vector<float>      hitPts;
+    std::vector<float>      hitClusWidths;
+    std::vector<float>      hitStubWidths;
     std::vector<id_type>    hitSuperstripIds;
     std::vector<int>        hitTrkIds;
 

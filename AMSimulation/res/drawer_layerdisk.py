@@ -64,7 +64,7 @@ pb = EtaBinning("#phi", 64, -3.2, 3.2)
 
 if sections["layerdisk"]:
 
-    if True:
+    if False:
         p0 = struct("layerdisk_nconnections", "dummy", "dummy",
             "# connections", 6, 0, 6, kBlack, blkrgb[2])
         histos = book([p0])
@@ -81,7 +81,7 @@ if sections["layerdisk"]:
         histos[0].h.Draw("same hist text0")
         save(imgdir, p0.name)
 
-    if True:
+    if False:
         params = [
             struct("layerdisk_nconnections0_eta", "dummy", "dummy",
                 "module "+eb.xtitle, eb.nbinsx, eb.xlow, eb.xup, kBlack, blkrgb[0]),
@@ -220,6 +220,56 @@ if sections["layerdisk"]:
             latex.DrawLatex(0.48, 0.75, "%i modules" % len(coordmap_eta[tt]))
             CMS_label()
             save(imgdir, p0.name)
+
+    if True:
+        # By layers and towers
+        p0 = struct2D("layerdisk_nsuperstrips_sssm", "dummy", "dummy",
+            "Tower", 3, 0, 3, "Layer", 11+1, 0, 11+1, kBlack, blkrgb[0])
+        p1 = struct2D("layerdisk_nsuperstrips_sslg", "dummy", "dummy",
+            "Tower", 3, 0, 3, "Layer", 11+1, 0, 11+1, kBlack, blkrgb[0])
+        histos = book2D([p0, p1])
+
+        for tt, moduleIds in ttmap.iteritems():
+            if tt not in [27, 35, 42]:
+                continue
+            for moduleId in moduleIds:
+                s_tt = "tt" + str(tt)
+                lay = decodeLayer(moduleId)
+                if isBarrelModule(moduleId):
+                    s_lay = "b" + str(lay)
+                else:
+                    s_lay = "e" + str(lay)
+
+                if isPSModule(moduleId):
+                    nsssms = (2 * 30)  # 30 = ceil(960./32)
+                    nsslgs = (2 * 4)   #  4 = ceil(960./256)
+                else:
+                    nsssms = (2 * 32)  # 32 = ceil(1016./32)
+                    nsslgs = (2 * 4)   #  4 = ceil(1016./256)
+
+                histos[0].h.Fill(s_tt, "all layers", nsssms)
+                histos[1].h.Fill(s_tt, "all layers", nsslgs)
+
+                histos[0].h.Fill(s_tt, s_lay, nsssms)
+                histos[1].h.Fill(s_tt, s_lay, nsslgs)
+
+        histos[0].caption = "ss32"
+        histos[1].caption = "ss256"
+        for histo in histos:
+            h = histo.h
+            #h.LabelsDeflate("X"); h.LabelsDeflate("Y"); h.LabelsOption("a")
+            h.SetMarkerSize(1.5)
+            h.Draw("TEXT")
+
+            totalline = TLine(0, 1, 3, 1)
+            totalline.SetLineStyle(7); totalline.SetLineColor(kGray)
+            totalline.Draw()
+
+            latex.SetTextSize(0.04)
+            latex.DrawLatex(0.2, 0.88, "# of superstrips")
+            latex.DrawLatex(0.2, 0.84, "using %s" % histo.caption)
+            CMS_label()
+            save(imgdir, histo.name)
 
 
 # ______________________________________________________________________________
@@ -478,8 +528,7 @@ if sections["rate_by_layer"]:
         boundaries = [-2.5, -1.3, -1.6, -0.5, -0.8, 0.2, -0.2, 0.8, 0.5, 1.6, 1.3, 2.5]
         tlines = [TLine(b, 0, b, ymax) for b in boundaries]
         for l in tlines:
-            l.SetLineStyle(7)
-            l.SetLineColor(kGray)
+            l.SetLineStyle(7); l.SetLineColor(kGray)
 
         # Draw trigger tower
         for iphi in xrange(8):
@@ -642,8 +691,7 @@ if sections["rate_by_layer2"]:
         boundaries = [0.6, 1.7, 1.4, 2.5, 2.2, -3.1, 3.0, -2.3, -2.6, -1.5, -1.8, -0.7, -1.0, 0.1, -0.2, 0.9]
         tlines = [TLine(b, 0, b, ymax) for b in boundaries]
         for l in tlines:
-            l.SetLineStyle(7)
-            l.SetLineColor(kGray)
+            l.SetLineStyle(7); l.SetLineColor(kGray)
 
         # Draw trigger tower
         for ieta in xrange(6):
@@ -922,8 +970,7 @@ if sections["efficiency_by_layer"]:
         # Make TLine
         ymax = 1.
         oneline = TLine(eb.xlow, ymax, eb.xup, ymax)
-        oneline.SetLineStyle(7)
-        oneline.SetLineColor(kGray)
+        oneline.SetLineStyle(7); oneline.SetLineColor(kGray)
 
         # Make ratio plots
         for i in xrange(5,11):
@@ -1102,8 +1149,7 @@ if sections["efficiency_by_layer2"]:
         # Make TLine
         ymax = 1.
         oneline = TLine(eb.xlow, ymax, eb.xup, ymax)
-        oneline.SetLineStyle(7)
-        oneline.SetLineColor(kGray)
+        oneline.SetLineStyle(7); oneline.SetLineColor(kGray)
 
         # Make ratio plots
         for i in xrange(5,11):
@@ -1322,8 +1368,7 @@ if sections["efficiency_by_track"]:
         # Make TLine
         ymax = 1.
         oneline = TLine(eb.xlow, ymax, eb.xup, ymax)
-        oneline.SetLineStyle(7)
-        oneline.SetLineColor(kGray)
+        oneline.SetLineStyle(7); oneline.SetLineColor(kGray)
 
         # Make TBox
         tboxes = [

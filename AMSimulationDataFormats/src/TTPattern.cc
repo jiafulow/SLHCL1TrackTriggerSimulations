@@ -24,7 +24,7 @@ std::ostream& operator<<(std::ostream& o, const std::vector<TTHit>& hits) {
 }
 
 std::ostream& operator<<(std::ostream& o, const TTRoad& road) {
-    o << "nHitLayers: " << (unsigned) road.nHitLayers() << " bank index: " << road.bankIndex() << " # TTHits: " << road.getHits().size() << " ";
+    o << "nSuperstrips: " << (unsigned) road.nSuperstrips() << " bank index: " << road.bankIndex() << " # TTHits: " << road.getHits().size() << " ";
     return o;
 }
 

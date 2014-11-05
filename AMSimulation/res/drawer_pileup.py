@@ -17,6 +17,7 @@ sections = {}
 sections["minbias_single"       ] = False
 sections["rate_by_module"       ] = True
 sections["rate_by_superstrip"   ] = False
+sections["ntracks_by_tower"     ] = False
 sections["nstubs_by_layer"      ] = False
 sections["nmodules_by_layer"    ] = False
 sections["nsuperstrips_by_layer"] = False
@@ -37,7 +38,10 @@ imgdir = "figures_pileup/"
 
 # Neutrino gun (140PU)
 if samples["nu140"]:
-    infiles = ["/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_ntuple/Neutrino_Pt2to20_gun_20140821/ntuple_1_1_9cK.root", "/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_ntuple/Neutrino_Pt2to20_gun_20140821/ntuple_2_1_HJw.root"]
+    #infiles = ["/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_ntuple/Neutrino_Pt2to20_gun_20140821/ntuple_1_1_9cK.root", "/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_ntuple/Neutrino_Pt2to20_gun_20140821/ntuple_2_1_HJw.root"]
+    #infiles = ["/uscms_data/d2/jiafu/L1TrackTrigger/CMSSW_6_2_0_SLHC12_patch1/src/SLHCL1TrackTriggerSimulations/Configuration/test/PU140/Neutrino_E2023TTI_PU140_ntuple.1.root"]
+    infiles = ["/uscms_data/d2/jiafu/L1TrackTrigger/CMSSW_6_2_0_SLHC12_patch1/src/SLHCL1TrackTriggerSimulations/Configuration/test/PU140/Neutrino_E2023TTI_PU140_TuneZ2star_ntuple.1.root"]
+    #infiles = ["/uscms_data/d2/jiafu/L1TrackTrigger/CMSSW_6_2_0_SLHC12_patch1/src/SLHCL1TrackTriggerSimulations/Configuration/test/PU140/Neutrino_E2023TTI_PU140_TuneCUEP6S1_ntuple.1.root"]
     col  = TColor.GetColor("#e31a1c")  # Paired
     fcol = TColor.GetColor("#fb9a99")
     imgdir = "figures_pileup_nu140/"
@@ -529,6 +533,14 @@ if sections["rate_by_superstrip"]:
     projectModule(tree, histos, nentries=nentries)
     d = drawModule1D(histos, imgdir)
     print tree.GetEntries(), histos.items()[0][1].GetEntries()
+
+
+# ______________________________________________________________________________
+if sections["ntracks_by_tower"]:
+
+    #TODO: implement this
+    def bookTrack():
+        pass
 
 
 # ______________________________________________________________________________

@@ -45,10 +45,10 @@ class TestAMSim(unittest.TestCase):
         #self.assertEqual(n, 476)
         self.assertEqual(n, 469)
 
-    def test_nHitLayers(self):
+    def test_nSuperstrips(self):
         tree = self.ttree
         for ievt in tree:
-            for iroad in ievt.AMTTRoads_nHitLayers:
+            for iroad in ievt.AMTTRoads_nSuperstrips:
                 self.assertEqual(iroad, 6)
 
     def test_bankIndex(self):
@@ -59,12 +59,6 @@ class TestAMSim(unittest.TestCase):
                 self.assertTrue(iroad not in bankIndices)
                 bankIndices[iroad] = 0
 
-    def test_charges(self):
-        tree = self.ttree
-        for ievt in tree:
-            for iroad in ievt.AMTTRoads_hitCharges:
-                for ihit in iroad:
-                    self.assertEqual(ihit, -1)
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

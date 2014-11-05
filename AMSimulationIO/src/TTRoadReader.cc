@@ -6,7 +6,7 @@ using namespace slhcl1tt;
 
 // _____________________________________________________________________________
 TTRoadReader::TTRoadReader(int verbose)
-: vr_nHitLayers        (0),
+: vr_nSuperstrips      (0),
   vr_bankIndex         (0),
   //
   vr_hitRs             (0),
@@ -15,8 +15,8 @@ TTRoadReader::TTRoadReader(int verbose)
   vr_hitRErrors        (0),
   vr_hitPhiErrors      (0),
   vr_hitZErrors        (0),
-  vr_hitCharges        (0),
-  vr_hitPts            (0),
+  vr_hitClusWidths     (0),
+  vr_hitStubWidths     (0),
   vr_hitSuperstripIds  (0),
   vr_hitTrkIds         (0),
   //
@@ -64,7 +64,7 @@ int TTRoadReader::init(TString src, TString prefix, TString suffix) {
     assert(tchain != 0);
     treenumber = tchain->GetTreeNumber();
 
-    tchain->SetBranchAddress(prefix + "nHitLayers"        + suffix, &(vr_nHitLayers));
+    tchain->SetBranchAddress(prefix + "nSuperstrips"      + suffix, &(vr_nSuperstrips));
     tchain->SetBranchAddress(prefix + "bankIndex"         + suffix, &(vr_bankIndex));
     //
     tchain->SetBranchAddress(prefix + "hitRs"             + suffix, &(vr_hitRs));
@@ -73,8 +73,8 @@ int TTRoadReader::init(TString src, TString prefix, TString suffix) {
     tchain->SetBranchAddress(prefix + "hitRErrors"        + suffix, &(vr_hitRErrors));
     tchain->SetBranchAddress(prefix + "hitPhiErrors"      + suffix, &(vr_hitPhiErrors));
     tchain->SetBranchAddress(prefix + "hitZErrors"        + suffix, &(vr_hitZErrors));
-    tchain->SetBranchAddress(prefix + "hitCharges"        + suffix, &(vr_hitCharges));
-    tchain->SetBranchAddress(prefix + "hitPts"            + suffix, &(vr_hitPts));
+    tchain->SetBranchAddress(prefix + "hitClusWidths"     + suffix, &(vr_hitClusWidths));
+    tchain->SetBranchAddress(prefix + "hitStubWidths"     + suffix, &(vr_hitStubWidths));
     tchain->SetBranchAddress(prefix + "hitSuperstripIds"  + suffix, &(vr_hitSuperstripIds));
     tchain->SetBranchAddress(prefix + "hitTrkIds"         + suffix, &(vr_hitTrkIds));
     //
@@ -101,7 +101,7 @@ Int_t TTRoadReader::getEntry(Long64_t entry) {
 
 // _____________________________________________________________________________
 TTRoadWriter::TTRoadWriter(int verbose)
-: vr_nHitLayers       (new std::vector<count_type>()),
+: vr_nSuperstrips     (new std::vector<count_type>()),
   vr_bankIndex        (new std::vector<id_type>()),
   //
   vr_hitRs            (new std::vector<std::vector<float> >()),
@@ -110,8 +110,8 @@ TTRoadWriter::TTRoadWriter(int verbose)
   vr_hitRErrors       (new std::vector<std::vector<float> >()),
   vr_hitPhiErrors     (new std::vector<std::vector<float> >()),
   vr_hitZErrors       (new std::vector<std::vector<float> >()),
-  vr_hitCharges       (new std::vector<std::vector<int> >()),
-  vr_hitPts           (new std::vector<std::vector<float> >()),
+  vr_hitClusWidths    (new std::vector<std::vector<float> >()),
+  vr_hitStubWidths    (new std::vector<std::vector<float> >()),
   vr_hitSuperstripIds (new std::vector<std::vector<id_type> >()),
   vr_hitTrkIds        (new std::vector<std::vector<int> >()),
   //
@@ -151,7 +151,7 @@ int TTRoadWriter::init(TString out, TString prefix, TString suffix) {
     tfile->mkdir("ntupler")->cd();
     ttree = new TTree("tree", "");
 
-    ttree->Branch(prefix + "nHitLayers"        + suffix, &(*vr_nHitLayers));
+    ttree->Branch(prefix + "nSuperstrips"      + suffix, &(*vr_nSuperstrips));
     ttree->Branch(prefix + "bankIndex"         + suffix, &(*vr_bankIndex));
     //
     ttree->Branch(prefix + "hitRs"             + suffix, &(*vr_hitRs));
@@ -160,8 +160,8 @@ int TTRoadWriter::init(TString out, TString prefix, TString suffix) {
     ttree->Branch(prefix + "hitRErrors"        + suffix, &(*vr_hitRErrors));
     ttree->Branch(prefix + "hitPhiErrors"      + suffix, &(*vr_hitPhiErrors));
     ttree->Branch(prefix + "hitZErrors"        + suffix, &(*vr_hitZErrors));
-    ttree->Branch(prefix + "hitCharges"        + suffix, &(*vr_hitCharges));
-    ttree->Branch(prefix + "hitPts"            + suffix, &(*vr_hitPts));
+    ttree->Branch(prefix + "hitClusWidths"     + suffix, &(*vr_hitClusWidths));
+    ttree->Branch(prefix + "hitStubWidths"     + suffix, &(*vr_hitStubWidths));
     ttree->Branch(prefix + "hitSuperstripIds"  + suffix, &(*vr_hitSuperstripIds));
     ttree->Branch(prefix + "hitTrkIds"         + suffix, &(*vr_hitTrkIds));
     //
@@ -176,7 +176,7 @@ int TTRoadWriter::init(TString out, TString prefix, TString suffix) {
 }
 
 void TTRoadWriter::fill(const std::vector<TTRoad>& roads, const std::vector<GenParticle>& genParts) {
-    vr_nHitLayers       ->clear();
+    vr_nSuperstrips     ->clear();
     vr_bankIndex        ->clear();
     //
     vr_hitRs            ->clear();
@@ -185,8 +185,8 @@ void TTRoadWriter::fill(const std::vector<TTRoad>& roads, const std::vector<GenP
     vr_hitRErrors       ->clear();
     vr_hitPhiErrors     ->clear();
     vr_hitZErrors       ->clear();
-    vr_hitCharges       ->clear();
-    vr_hitPts           ->clear();
+    vr_hitClusWidths    ->clear();
+    vr_hitStubWidths    ->clear();
     vr_hitSuperstripIds ->clear();
     vr_hitTrkIds        ->clear();
     //
@@ -206,8 +206,8 @@ void TTRoadWriter::fill(const std::vector<TTRoad>& roads, const std::vector<GenP
         hitRErrors       .clear();
         hitPhiErrors     .clear();
         hitZErrors       .clear();
-        hitCharges       .clear();
-        hitPts           .clear();
+        hitClusWidths    .clear();
+        hitStubWidths    .clear();
         hitSuperstripIds .clear();
         hitTrkIds        .clear();
 
@@ -222,13 +222,13 @@ void TTRoadWriter::fill(const std::vector<TTRoad>& roads, const std::vector<GenP
             hitRErrors.push_back(hit.rError);
             hitPhiErrors.push_back(hit.phiError);
             hitZErrors.push_back(hit.zError);
-            hitCharges.push_back(hit.charge);
-            hitPts.push_back(hit.pt);
+            hitClusWidths.push_back(hit.clusWidth);
+            hitStubWidths.push_back(hit.stubWidth);
             hitSuperstripIds.push_back(hit.superstripId);
             hitTrkIds.push_back(hit.trkId);
         }
 
-        vr_nHitLayers       ->push_back(road.nHitLayers());
+        vr_nSuperstrips     ->push_back(road.nSuperstrips());
         vr_bankIndex        ->push_back(road.bankIndex());
         //
         vr_hitRs            ->push_back(hitRs);
@@ -237,8 +237,8 @@ void TTRoadWriter::fill(const std::vector<TTRoad>& roads, const std::vector<GenP
         vr_hitRErrors       ->push_back(hitRErrors);
         vr_hitPhiErrors     ->push_back(hitPhiErrors);
         vr_hitZErrors       ->push_back(hitZErrors);
-        vr_hitCharges       ->push_back(hitCharges);
-        vr_hitPts           ->push_back(hitPts);
+        vr_hitClusWidths    ->push_back(hitClusWidths);
+        vr_hitStubWidths    ->push_back(hitStubWidths);
         vr_hitSuperstripIds ->push_back(hitSuperstripIds);
         vr_hitTrkIds        ->push_back(hitTrkIds);
     }

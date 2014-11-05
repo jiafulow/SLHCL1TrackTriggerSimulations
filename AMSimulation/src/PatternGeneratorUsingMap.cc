@@ -301,20 +301,24 @@ int PatternGenerator::writePatterns_map(TString out) {
     // Save trigger tower maps
     writer.pb_ttmap = &triggerTowerMap_;
     writer.pb_ttrmap = &triggerTowerReverseMap_;
-    writer.fillTriggerTower();
+    writer.fillTriggerTowerMaps();
+
+    // _________________________________________________________________________
+    // Save pattern bank statistics
+    *(writer.pb_coverage) = coverage_;
+    *(writer.pb_count) = coverage_count_;
+    writer.fillPatternBankStats();
 
     // _________________________________________________________________________
     // Save pattern bank
     const long long nentries = allPatterns_map_pairs_.size();
 
-    float integralFreq_f = 0;
     unsigned integralFreq = 0;
     count_type freq = MAX_FREQUENCY, oldFreq = MAX_FREQUENCY;
 
     for (long long ievt=0; ievt<nentries; ++ievt) {
         if (verbose_>1 && ievt%10000==0) {
-            integralFreq_f = integralFreq;
-            float coverage = integralFreq_f / coverage_count_ * coverage_;
+            float coverage = float(integralFreq) / coverage_count_ * coverage_;
             std::cout << Debug() << Form("... Writing event: %7lld, sorted coverage: %7.5f", ievt, coverage) << std::endl;
         }
 

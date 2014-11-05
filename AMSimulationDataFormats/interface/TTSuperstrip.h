@@ -27,9 +27,9 @@ struct TTHit {
     float rError;
     float phiError;
     float zError;
-    int charge;
-    float pt;
-    id_type  superstripId;
+    float clusWidth;  // cluster width
+    float stubWidth;  // stub width
+    id_type superstripId;
     int trkId;
 
     // Functions

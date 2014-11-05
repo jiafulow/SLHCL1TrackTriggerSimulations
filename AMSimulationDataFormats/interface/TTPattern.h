@@ -26,13 +26,13 @@ class TTRoad {
   public:
     // Constructors
     TTRoad()
-    : nHitLayers_(0), bankIndex_(0), hits_() {}
+    : nSuperstrips_(0), bankIndex_(0), hits_() {}
 
-    TTRoad(count_type nHitLayers, id_type bankIndex, const std::vector<TTHit>& hits)
-    : nHitLayers_(nHitLayers), bankIndex_(bankIndex), hits_(hits) {}
+    TTRoad(count_type nSuperstrips, id_type bankIndex, const std::vector<TTHit>& hits)
+    : nSuperstrips_(nSuperstrips), bankIndex_(bankIndex), hits_(hits) {}
 
     TTRoad(const TTRoad& rhs)
-    : nHitLayers_(rhs.nHitLayers_), bankIndex_(rhs.bankIndex_), hits_(rhs.hits_) {}
+    : nSuperstrips_(rhs.nSuperstrips_), bankIndex_(rhs.bankIndex_), hits_(rhs.hits_) {}
 
     // Destructor
     ~TTRoad() {}
@@ -41,7 +41,7 @@ class TTRoad {
     // none
 
     // Getters
-    count_type nHitLayers()         const { return nHitLayers_; }
+    count_type nSuperstrips()       const { return nSuperstrips_; }
 
     id_type bankIndex()             const { return bankIndex_; }
 
@@ -50,7 +50,7 @@ class TTRoad {
 
 
   private:
-    count_type nHitLayers_;
+    count_type nSuperstrips_;
     id_type bankIndex_;
     std::vector<TTHit> hits_;
 };

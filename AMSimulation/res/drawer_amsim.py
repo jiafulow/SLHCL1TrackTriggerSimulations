@@ -2,6 +2,7 @@
 
 from rootdrawing import *
 from roothelper import *
+import itertools
 import os
 
 # ______________________________________________________________________________
@@ -235,18 +236,36 @@ if sections["coverage"]:
             # Get trigger results
             trigger = (ievt.AMTTRoads_nHitLayers.size() > 0)
 
-            # Loop over stubs
-            found_mlayers = [0] * 6
+            # Loop over stub moduleIds
+            moduleIds_by_mlayers = [[], [], [], [], [], []]  # 6 mlayers
             for moduleId in ievt.TTStubs_modId:
                 lay = decodeLayer(moduleId)
                 mlay = layermap[lay]
-                found_mlayers[mlay] = 1
-            count_mlayers = sum(found_mlayers)
-            accept = (count_mlayers == 6)
+                moduleIds_by_mlayers[mlay].append(moduleId)
 
+            # At least one stub in every mlayer
+            accept = True
+            for moduleIds in moduleIds_by_mlayers:
+                if not len(moduleIds):
+                    accept = False
+                    break
+
+            # At least one stub combination is fully contained in at least one trigger tower
             if accept:
-                # FIXME: need to apply trigger tower acceptance cut here
-                pass
+                accept = False
+                for combination in itertools.product(*moduleIds_by_mlayers):
+                    count_by_tt = {}
+                    for moduleId in combination:
+                        for tt in ttrmap[moduleId]:
+                            # Idiom for incrementing
+                            # See: http://www.gis.sdsu.edu/~gawron/compling/course_core/assignments/dictionary_discussion.htm
+                            count_by_tt[tt] = count_by_tt.get(tt, 0) + 1
+                    for tt, count in count_by_tt.iteritems():
+                        if count == 6:
+                            accept = True
+                            break
+                    if accept:
+                        break
 
             fill(thePt, theEta, thePhi, theVz, accept, trigger)
 

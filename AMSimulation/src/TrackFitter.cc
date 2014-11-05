@@ -36,7 +36,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
         if (reader.loadTree(ievt) < 0)  break;
         reader.getEntry(ievt);
 
-        const unsigned nroads = reader.vr_nHitLayers->size();
+        const unsigned nroads = reader.vr_hitRs->size();
         if (verbose_>1 && ievt%5000==0)  std::cout << Debug() << Form("... Processing event: %7lld, keeping: %7i, fitting: %7i", ievt, nKept, nPassed) << std::endl;
         if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " # roads: " << nroads << std::endl;
 
@@ -67,8 +67,8 @@ int TrackFitter::makeTracks(TString src, TString out) {
                     reader.vr_hitRErrors->at(i).at(j),
                     reader.vr_hitPhiErrors->at(i).at(j),
                     reader.vr_hitZErrors->at(i).at(j),
-                    reader.vr_hitCharges->at(i).at(j),
-                    reader.vr_hitPts->at(i).at(j),
+                    reader.vr_hitClusWidths->at(i).at(j),
+                    reader.vr_hitStubWidths->at(i).at(j),
                     reader.vr_hitSuperstripIds->at(i).at(j),
                     reader.vr_hitTrkIds->at(i).at(j)
                 });
@@ -83,7 +83,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
                 hitsViewUV.push_back(hitViewUV);
             }
 
-            TTRoad road(reader.vr_nHitLayers->at(i), reader.vr_bankIndex->at(i), hits);
+            TTRoad road(reader.vr_nSuperstrips->at(i), reader.vr_bankIndex->at(i), hits);
 
             // Fitting starts here
             RetinaTrackFitterAlgo<ZR> retinaZR(po.pqType, po.pbins, po.qbins, po.pmin, po.qmin, po.pmax, po.qmax, po.sigma, po.minWeight);

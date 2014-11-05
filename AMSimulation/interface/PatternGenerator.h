@@ -95,7 +95,7 @@ class PatternGenerator {
 
     // Bookkeepers
     float coverage_;
-    float coverage_count_;
+    unsigned coverage_count_;
 };
 
 #endif

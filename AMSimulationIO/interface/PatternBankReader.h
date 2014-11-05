@@ -25,6 +25,8 @@ class PatternBankReader {
     void getTriggerTowerMaps(std::map<unsigned, std::vector<unsigned> >& ttmap,
                              std::map<unsigned, std::vector<unsigned> >& ttrmap);
 
+    void getPatternBankStats(float& coverage, unsigned& count);
+
     Int_t getPattern(Long64_t entry) { return ttree->GetEntry(entry); }
 
     Long64_t getPatterns() const { return ttree->GetEntries(); }
@@ -33,6 +35,10 @@ class PatternBankReader {
     std::map<unsigned, std::vector<unsigned> > * pb_ttmap;
     std::map<unsigned, std::vector<unsigned> > * pb_ttrmap;
 
+    // Pattern bank statistics
+    float                   pb_coverage;
+    unsigned                pb_count;
+
     // Pattern bank
     count_type              pb_frequency;
     std::vector<id_type> *  pb_superstripIds;
@@ -40,7 +46,8 @@ class PatternBankReader {
   private:
     TFile* tfile;
     TTree* ttree;   // for pattern bank
-    TTree* ttree2;  // for trigger tower map
+    TTree* ttree2;  // for pattern bank statistics
+    TTree* ttree3;  // for trigger tower map
     const int verbose_;
 };
 
@@ -53,15 +60,21 @@ class PatternBankWriter {
 
     int init(TString out);
 
-    void fillTriggerTower();  // must be called before fillPatternBank()
+    void fillTriggerTowerMaps();  // must be called before fillPatternBank()
 
-    void fillPatternBank();   // must be called after fillTriggerTower
+    void fillPatternBankStats();  // must be called before fillPatternBank()
+
+    void fillPatternBank();   // must be called after fillTriggerTower()
 
     Long64_t write();
 
     // Trigger tower map
     std::map<unsigned, std::vector<unsigned> > * pb_ttmap;
     std::map<unsigned, std::vector<unsigned> > * pb_ttrmap;
+
+    // Pattern bank statistics
+    std::auto_ptr<float>                  pb_coverage;
+    std::auto_ptr<unsigned>               pb_count;
 
     // Pattern bank
     std::auto_ptr<count_type>             pb_frequency;
@@ -70,7 +83,8 @@ class PatternBankWriter {
   private:
     TFile* tfile;
     TTree* ttree;   // for pattern bank
-    TTree* ttree2;  // for trigger tower map
+    TTree* ttree2;  // for pattern bank statistics
+    TTree* ttree3;  // for trigger tower map
     const int verbose_;
 };
 
