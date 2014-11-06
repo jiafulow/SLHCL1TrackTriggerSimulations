@@ -49,6 +49,14 @@ class TTTrack {
     /// Stub Pt consistency
     double       getStubPtConsistency(unsigned int nPar=5) const;
     void         setStubPtConsistency(double aPtConsistency, unsigned int nPar=5);
+    
+    // Raw track parameters
+    double       rho_, phi0_, z0_, cottheta0_, chi2_, chi2Red_;
+    
+    // Road index. Replaces the list of stubs.
+    unsigned int roadIndex_; // We won't need the stubs
+    void         setRoadIndex(unsigned int);
+    unsigned int getRoadIndex() const;
 
   private:
     bool checkValidArgs(unsigned int nPar, const std::string& fcn) const;
