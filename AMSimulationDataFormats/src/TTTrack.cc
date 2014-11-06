@@ -230,6 +230,16 @@ double TTTrack::getStubPtConsistency(unsigned int nPar) const {
   return 0.0;
 }
 
+void TTTrack::setRoadIndex(unsigned int i)
+{
+  roadIndex_=i;
+}
+
+unsigned int TTTrack::getRoadIndex() const
+{
+  return roadIndex_;
+}
+
 
 bool TTTrack::checkValidArgs(unsigned int nPar, const std::string& fcn) const {
   if (!(nPar==4||nPar==5)) {
