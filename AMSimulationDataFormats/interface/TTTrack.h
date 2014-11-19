@@ -51,7 +51,8 @@ class TTTrack {
     void         setStubPtConsistency(double aPtConsistency, unsigned int nPar=5);
     
     // Raw track parameters
-    double       rho_, phi0_, z0_, cottheta0_, chi2_, chi2Red_;
+    double       rho_, phi0_, z0_, cottheta0_;
+    double       chi2_, chi2Red_, chi2_phi_, chi2_z_;
     
     // Road index. Replaces the list of stubs.
     unsigned int roadIndex_; // We won't need the stubs

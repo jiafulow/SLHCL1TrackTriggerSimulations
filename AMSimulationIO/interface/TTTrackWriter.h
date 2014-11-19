@@ -33,12 +33,9 @@ class TTTrackWriter {
 		std::auto_ptr<std::vector<float> > tracks_cottheta0_;
 		std::auto_ptr<std::vector<float> > tracks_chi2_;
 		std::auto_ptr<std::vector<float> > tracks_chi2Red_;
+    std::auto_ptr<std::vector<float> > tracks_chi2_phi_;
+    std::auto_ptr<std::vector<float> > tracks_chi2_z_; 
     std::auto_ptr<std::vector<unsigned int> > tracks_roadIndex_;
-    // Generator particles
-    /*std::auto_ptr<std::vector<float> > genParts_pt_;
-    std::auto_ptr<std::vector<float> > genParts_phi_;
-    std::auto_ptr<std::vector<float> > genParts_eta_;
-    std::auto_ptr<std::vector<float> > genParts_charge_;*/
 };
 
 } // namespace slhcl1tt
