@@ -12,9 +12,14 @@ std::ostream& operator<<(std::ostream& o, const TTSuperstrip& ss) {
 std::ostream& operator<<(std::ostream& o, const TTHit& hit) {
     o << "r: " << hit.r << " phi: " << hit.phi << " z: " << hit.z
       << " r_err: " << hit.rError << " phi_err: " << hit.phiError << " z_err: " << hit.zError
-      << " clusWidth: " << hit.clusWidth << " stubWidth: " << hit.stubWidth
-      << " superstripId: " << hit.superstripId << " "
-      << " trkId: " << hit.trkId;
+      << " ";
+    return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const std::vector<TTHit>& hits) {
+    for (std::vector<TTHit>::const_iterator it=hits.begin(); it!=hits.end(); ++it) {
+        o << *it << std::endl;
+    }
     return o;
 }
 

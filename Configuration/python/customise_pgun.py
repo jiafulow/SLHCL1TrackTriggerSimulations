@@ -81,6 +81,8 @@ def cust_useTrackerOnly(process, intime=True, ntuple=True):
 
     # Reduce number of tracking particles
     process.mix.digitizers.mergedtruth.alwaysAddAncestors = cms.bool(False)
+    process.mix.digitizers.mergedtruth.maximumPreviousBunchCrossing = cms.uint32(0)
+    process.mix.digitizers.mergedtruth.maximumSubsequentBunchCrossing = cms.uint32(0)
     process.mix.digitizers.mergedtruth.ignoreTracksOutsideVolume = cms.bool(True)
     process.mix.digitizers.mergedtruth.select.ptMinTP = cms.double(0.2)
     #process.mix.digitizers.mergedtruth.select.minHitTP = cms.int32(0)

@@ -26,9 +26,9 @@ class TestAMSim(unittest.TestCase):
         tree = self.ttree
         n = 0
         for ievt in tree:
-            for iroad in ievt.AMTTRoads_hitRs:
+            for iroad in ievt.AMTTRoads_stubRefs:
                 n += 1
-            self.assertTrue(ievt.AMTTRoads_hitRs.size() in [0, 1, 7, 28])
+            self.assertTrue(ievt.AMTTRoads_stubRefs.size() in [0, 1, 7, 28])
         #self.assertEqual(n, 63 + 15 * 7 + 0 * 28)
         #self.assertEqual(n, 78)
         self.assertEqual(n, 77)
@@ -37,18 +37,18 @@ class TestAMSim(unittest.TestCase):
         tree = self.ttree
         n = 0
         for ievt in tree:
-            for iroad in ievt.AMTTRoads_hitRs:
+            for iroad in ievt.AMTTRoads_stubRefs:
                 for ihit in iroad:
                     n += 1
-                self.assertTrue(iroad.size() in [0, 6, 7])
+                self.assertTrue(iroad.size() in [0, 6, 7, 8])
         #self.assertEqual(n, 1031)
         #self.assertEqual(n, 476)
-        self.assertEqual(n, 469)
+        self.assertEqual(n, 471)
 
-    def test_nSuperstrips(self):
+    def test_nsuperstrips(self):
         tree = self.ttree
         for ievt in tree:
-            for iroad in ievt.AMTTRoads_nSuperstrips:
+            for iroad in ievt.AMTTRoads_nsuperstrips:
                 self.assertEqual(iroad, 6)
 
     def test_bankIndex(self):

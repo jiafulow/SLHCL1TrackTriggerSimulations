@@ -1,7 +1,7 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PatternMatcher.h"
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubReader.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/PatternBankReader.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubReader.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTRoadReader.h"
 
 static const unsigned MAX_NLAYERS = pattern_type().size();  // ought to be 8
@@ -26,16 +26,16 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
 
     id_type fakeSuperstrip;
     if (po.mode == 2) {  // luciano superstrip
-        fakeSuperstrip = arbiter_ -> superstrip_luciano(27, 0, 0, po.unitPhi, po.unitZ);
+        fakeSuperstrip = arbiter_ -> superstrip_luciano(27, 0, 0, po.unitPhi, po.unitEta);
     } else {
         fakeSuperstrip = arbiter_ -> superstrip(27, 0, 0, 0, 0);
     }
 
-    id_type nsuperstrips = fakeSuperstrip + 1;
-    if (nsuperstrips & 1) nsuperstrips += 1;  // if odd, make it even
+    id_type nvalues = fakeSuperstrip + 1;
+    if (nvalues & 1) nvalues += 1;  // if odd, make it even
 
-    if (verbose_)  std::cout << Info() << "Loading " << npatterns << " patterns, assuming " << nsuperstrips << " superstrips. " << std::endl;
-    assert(npatterns > 0 && nsuperstrips > 0);
+    if (verbose_)  std::cout << Info() << "Loading " << npatterns << " patterns, assuming " << nvalues << " possible superstripIds. " << std::endl;
+    assert(npatterns > 0 && nvalues > 0);
 
     // Allocate memory
     inputPatterns_vector_.clear();
@@ -44,8 +44,8 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
     // _________________________________________________________________________
     // Loop over all patterns
 
-    for (long long ievt=0; ievt<npatterns; ++ievt) {
-        pbreader.getPattern(ievt);
+    for (long long ipatt=0; ipatt<npatterns; ++ipatt) {
+        pbreader.getPattern(ipatt);
         if (pbreader.pb_frequency < minFrequency_)
             break;
 
@@ -53,7 +53,7 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
 
         // Here we insert all superstrips including the virtual ones (calo, muon)
         // When doing the matching, the virtual ones are not used
-        std::copy(pbreader.pb_superstripIds->begin(), pbreader.pb_superstripIds->end(), inputPatterns_vector_.at(ievt).begin());
+        std::copy(pbreader.pb_superstripIds->begin(), pbreader.pb_superstripIds->end(), inputPatterns_vector_.at(ipatt).begin());
 
         if (verbose_>3) {
             for (unsigned i=0; i<MAX_NLAYERS; ++i) {
@@ -90,18 +90,6 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
     } else {
         TChain* tchain = reader.getChain();
         tchain->SetBranchStatus("*"                 , 0);
-      //tchain->SetBranchStatus("TTStubs_x"         , 1);
-      //tchain->SetBranchStatus("TTStubs_y"         , 1);
-        tchain->SetBranchStatus("TTStubs_z"         , 1);
-        tchain->SetBranchStatus("TTStubs_r"         , 1);
-      //tchain->SetBranchStatus("TTStubs_eta"       , 1);
-        tchain->SetBranchStatus("TTStubs_phi"       , 1);
-        tchain->SetBranchStatus("TTStubs_coordx"    , 1);
-        tchain->SetBranchStatus("TTStubs_coordy"    , 1);
-      //tchain->SetBranchStatus("TTStubs_roughPt"   , 1);
-        tchain->SetBranchStatus("TTStubs_trigBend"  , 1);
-        tchain->SetBranchStatus("TTStubs_modId"     , 1);
-        tchain->SetBranchStatus("TTStubs_trkId"     , 1);
         tchain->SetBranchStatus("genParts_pt"       , 1);
         tchain->SetBranchStatus("genParts_eta"      , 1);
         tchain->SetBranchStatus("genParts_phi"      , 1);
@@ -109,11 +97,24 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
         tchain->SetBranchStatus("genParts_vy"       , 1);
         tchain->SetBranchStatus("genParts_vz"       , 1);
         tchain->SetBranchStatus("genParts_charge"   , 1);
+        tchain->SetBranchStatus("TTStubs_x"         , 1);
+        tchain->SetBranchStatus("TTStubs_y"         , 1);
+        tchain->SetBranchStatus("TTStubs_z"         , 1);
+        tchain->SetBranchStatus("TTStubs_r"         , 1);
+        tchain->SetBranchStatus("TTStubs_eta"       , 1);
+        tchain->SetBranchStatus("TTStubs_phi"       , 1);
+        tchain->SetBranchStatus("TTStubs_coordx"    , 1);
+        tchain->SetBranchStatus("TTStubs_coordy"    , 1);
+        tchain->SetBranchStatus("TTStubs_roughPt"   , 1);
+        tchain->SetBranchStatus("TTStubs_trigBend"  , 1);
+      //tchain->SetBranchStatus("TTStubs_clusWidth" , 1);
+        tchain->SetBranchStatus("TTStubs_modId"     , 1);
+        tchain->SetBranchStatus("TTStubs_tpId"      , 1);
     }
 
     // For writing
     TTRoadWriter writer(verbose_);
-    if (writer.init(out, prefixRoad_, suffix_)) {
+    if (writer.init(reader.getChain(), out, prefixRoad_, suffix_)) {
         std::cout << Error() << "Failed to initialize TTRoadWriter." << std::endl;
         return 1;
     }
@@ -123,17 +124,15 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
     // Loop over all events
 
     // Containers
-    std::vector<std::vector<TTHit> > hitses;  // just like hits, but before serialized
-    std::vector<TTHit> hits;                  // after serialized
+    std::vector<unsigned> stubRefs;           // a serialized list of stubs in a road
+    std::vector<unsigned> stubSuperstripIds;  // the superstrip ids of the stubs
 
-    std::map<id_type, std::vector<TTHit> > superstripHitsMap;   // key: superstrip addr; values: vector of hits
-    std::vector<bool> superstripBooleans;                       // index: superstrip addr; true: found
-    superstripBooleans.resize(nsuperstrips);
+    std::map<id_type, std::vector<unsigned> > superstripToStubsMap;  // key: superstrip addr; values: vector of stub indices in the superstrip
+    std::vector<bool> superstripBooleans;     // index: superstrip addr; true: found
+    superstripBooleans.resize(nvalues);
 
     std::vector<TTRoad> roads;
     roads.reserve(300);
-    std::vector<GenParticle> genParts;
-    genParts.reserve(50);
 
     // Bookkeepers
     int nPassed = 0, nKept = 0;
@@ -147,7 +146,7 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
         if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " # stubs: " << nstubs << std::endl;
 
         if (!nstubs) {  // skip if no stub
-            writer.fill(std::vector<TTRoad>(), std::vector<GenParticle>());
+            writer.fill(std::vector<TTRoad>());
             ++nKept;
             continue;
         }
@@ -159,12 +158,12 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
 
         // _____________________________________________________________________
         // Start pattern recognition
-        superstripHitsMap.clear();
+        superstripToStubsMap.clear();
         std::fill(superstripBooleans.begin(), superstripBooleans.end(), false);
 
         // Loop over reconstructed stubs
         id_type ssId, moduleId, lay, lad, mod, col, row;  // declare the usual suspects
-        float stub_r, stub_phi, stub_z, stub_trigBend;
+        float stub_r, stub_eta, stub_phi, stub_z, stub_trigBend;
         for (unsigned l=0; l<nstubs; ++l) {
 
             // Break moduleId into lay, lad, mod
@@ -178,8 +177,9 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
             col = halfStripRound(reader.vb_coordy->at(l));
             row = halfStripRound(reader.vb_coordx->at(l));
 
-            // global r, phi, z
+            // global r, eta, phi, z
             stub_r = reader.vb_r->at(l);
+            stub_eta = reader.vb_eta->at(l);
             stub_phi = reader.vb_phi->at(l);
             stub_z = reader.vb_z->at(l);
             stub_trigBend = reader.vb_trigBend->at(l);
@@ -192,32 +192,42 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
 
             // Find superstrip address
             if (po.mode == 2) {  // luciano superstrip
-                ssId = arbiter_ -> superstrip_luciano(lay, stub_phi, stub_z, po.unitPhi, po.unitZ);
+                ssId = arbiter_ -> superstrip_luciano(lay, stub_phi, stub_eta, po.unitPhi, po.unitEta);
             } else {
                 ssId = arbiter_ -> superstrip(lay, lad, mod, col, row);
             }
 
-            // Create a hit
-            const int& trkId = reader.vb_trkId->at(l);
-            superstripHitsMap[ssId].emplace_back(TTHit{stub_r, stub_phi, stub_z, 0., 0., 0., 0., stub_trigBend, ssId, trkId});  // POD type constructor
+            // Create a link from superstrip to stub index
+            superstripToStubsMap[ssId].push_back(l);
 
             // Make a tick
             superstripBooleans.at(ssId) = true;
 
-            if (verbose_>2)  std::cout << Debug() << "... ... stub: " << l << " moduleId: " << moduleId << " col: " << col << " row: " << row << " ssId: " << ssId << std::endl;
+            if (verbose_>2) {
+                std::cout << Debug() << "... ... stub: " << l << " moduleId: " << moduleId << " col: " << col << " row: " << row << " r: " << stub_r << " eta: " << stub_eta << " phi: " << stub_phi << std::endl;
+                std::cout << Debug() << "... ... stub: " << l << " ssId: " << ssId << std::endl;
+            }
         }
 
         // Always trigger fake superstrip
-        superstripHitsMap[fakeSuperstrip] = std::vector<TTHit>();
+        superstripToStubsMap[fakeSuperstrip] = std::vector<unsigned>();
         superstripBooleans.at(fakeSuperstrip) = true;
+
+        // Limit the max number of stubs that can be read out in a superstrip
+        for (std::map<id_type, std::vector<unsigned> >::iterator it = superstripToStubsMap.begin();
+             it != superstripToStubsMap.end(); ++it) {
+            if ((int) it->second.size() > maxStubs_)
+                it->second.resize(maxStubs_);
+        }
 
 
         // _____________________________________________________________________
         // Create roads
         roads.clear();
 
-        hitses.clear();
-        hits.clear();
+        stubRefs.clear();
+        stubSuperstripIds.clear();
+        count_type nsuperstrips = 0;
 
         // Perform direct lookup
         std::vector<unsigned> outputPatterns;
@@ -225,7 +235,7 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
              itpatt != inputPatterns_vector_.end(); ++itpatt) {
             unsigned nMisses = 0;
 
-            for (pattern_type::const_iterator itss = itpatt->begin(); itss != itpatt->begin() + nLayers_; ++itss) {
+            for (pattern_type::const_reverse_iterator itss = itpatt->rbegin(); itss != itpatt->rbegin() + nLayers_; ++itss) {
                 const id_type& ssId = *itss;
 
                 if (!superstripBooleans.at(ssId))
@@ -240,30 +250,35 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
         }
 
         // Collect stubs
-        std::map<id_type, std::vector<TTHit> >::iterator found;
+        std::map<id_type, std::vector<unsigned> >::const_iterator found;
+        std::vector<unsigned>::const_iterator itfound;
 
         for (std::vector<unsigned>::const_iterator it = outputPatterns.begin(); it != outputPatterns.end(); ++it) {
-            hitses.clear();
-            hits.clear();
+            stubRefs.clear();
+            stubSuperstripIds.clear();
+            nsuperstrips = 0;
 
             std::vector<pattern_type>::const_iterator itpatt = inputPatterns_vector_.begin() + (*it);
 
             for (pattern_type::const_iterator itss = itpatt->begin(); itss != itpatt->begin() + nLayers_; ++itss) {
                 const id_type& ssId = *itss;
 
-                found = superstripHitsMap.find(ssId);
-                if (found != superstripHitsMap.end()) {
-                    hitses.push_back(found -> second);
-                    if ((int) hitses.back().size() > maxHits_)
-                        hitses.back().resize(maxHits_);
+                found = superstripToStubsMap.find(ssId);
+                if (found != superstripToStubsMap.end()) {
+                    if (!found->second.empty())
+                        ++nsuperstrips;
+                    for (itfound = found->second.begin(); itfound != found->second.end(); ++itfound) {
+                        stubRefs.push_back(*itfound);
+                        stubSuperstripIds.push_back(ssId);
+                    }
+                } else {
+                    // ??
                 }
             }
 
-            // Serialize
-            for (unsigned i=0; i<hitses.size(); ++i) {
-                hits.insert(hits.end(), hitses.at(i).begin(), hitses.at(i).end());
-            }
-            roads.emplace_back(hitses.size(), *it, hits);
+            assert(stubSuperstripIds.size() == stubRefs.size());
+            TTRoad road(*it, 99, nsuperstrips, stubSuperstripIds, stubRefs);
+            roads.push_back(road);
 
             if (verbose_>2)  std::cout << Debug() << "... ... road: " << roads.size() - 1 << " " << roads.back() << std::endl;
 
@@ -274,30 +289,13 @@ int PatternMatcher::makeRoads_vector(TString src, TString bank, TString out) {
         if (! roads.empty())
             ++nPassed;
 
-        // _____________________________________________________________________
-        // In addition, keep genParticle info
-        genParts.clear();
-
-        const unsigned nparts = reader.vp_pt->size();
-        GenParticle part;
-        for (unsigned l=0; l<nparts; ++l) {
-            part.pt     = reader.vp_pt->at(l);
-            part.eta    = reader.vp_eta->at(l);
-            part.phi    = reader.vp_phi->at(l);
-            part.vx     = reader.vp_vx->at(l);
-            part.vy     = reader.vp_vy->at(l);
-            part.vz     = reader.vp_vz->at(l);
-            part.charge = reader.vp_charge->at(l);
-            genParts.push_back(part);
-        }
-
-        writer.fill(roads, genParts);
+        writer.fill(roads);
         ++nKept;
     }
 
     if (verbose_)  std::cout << Info() << "Processed " << nEvents_ << " events, kept " << nKept << ", triggered on " << nPassed << std::endl;
 
-    long long nentries = writer.write();
+    long long nentries = writer.writeTree();
     assert(nentries == nKept);
 
     return 0;

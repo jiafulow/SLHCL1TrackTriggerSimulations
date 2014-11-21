@@ -5,8 +5,8 @@
 
 #include "TFile.h"
 #include "TROOT.h"
-#include "TTree.h"
 #include "TString.h"
+#include "TTree.h"
 #include <map>
 #include <memory>
 #include <vector>
@@ -43,7 +43,7 @@ class PatternBankReader {
     count_type              pb_frequency;
     std::vector<id_type> *  pb_superstripIds;
 
-  private:
+  protected:
     TFile* tfile;
     TTree* ttree;   // for pattern bank
     TTree* ttree2;  // for pattern bank statistics
@@ -64,9 +64,9 @@ class PatternBankWriter {
 
     void fillPatternBankStats();  // must be called before fillPatternBank()
 
-    void fillPatternBank();   // must be called after fillTriggerTower()
+    void fillPatternBank();
 
-    Long64_t write();
+    Long64_t writeTree();
 
     // Trigger tower map
     std::map<unsigned, std::vector<unsigned> > * pb_ttmap;
@@ -80,7 +80,7 @@ class PatternBankWriter {
     std::auto_ptr<count_type>             pb_frequency;
     std::auto_ptr<std::vector<id_type> >  pb_superstripIds;
 
-  private:
+  protected:
     TFile* tfile;
     TTree* ttree;   // for pattern bank
     TTree* ttree2;  // for pattern bank statistics

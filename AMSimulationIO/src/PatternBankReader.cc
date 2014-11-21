@@ -147,7 +147,7 @@ void PatternBankWriter::fillPatternBank() {
     ttree->Fill();
 }
 
-Long64_t PatternBankWriter::write() {
+Long64_t PatternBankWriter::writeTree() {
     Long64_t nentries = ttree->GetEntries();
     tfile->Write();
     //tfile->Close();

@@ -4,19 +4,13 @@
 #include <vector>
 #include <iosfwd>
 
+
 namespace slhcl1tt {
 
 struct TrackFitterOption {
-    unsigned nLayers;  // FIXME: remove this?
-    int pqType;
-    int pbins;
-    int qbins;
-    float pmin;
-    float qmin;
-    float pmax;
-    float qmax;
-    float sigma;
-    float minWeight;
+    float    maxChi2Red;
+    int      minNdof;
+    unsigned mode;
 };
 
 std::ostream& operator<<(std::ostream& o, const TrackFitterOption& po);

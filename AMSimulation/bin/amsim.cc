@@ -50,11 +50,11 @@ int main(int argc, char **argv) {
     // and in config file
     std::string input, output, layout, bankfile, roadfile, trackfile;
     long long maxEvents;
-    int minFrequency, maxPatterns, maxRoads, maxHits, maxTracks;
+    int minFrequency, maxPatterns, maxRoads, maxStubs, maxTracks;
     bool nofilter, notrim;
     PatternBankOption bankOption;
     TrackFitterOption fitOption;
-    unsigned dividePhi, divideZ;
+    unsigned dividePhi, divideEta;
 
     const std::vector<unsigned> dv_subLadderVarSize = {8, 16, 32, 16, 16, 32};
     const std::vector<unsigned> dv_subModuleVarSize = {256, 256, 256, 256, 512, 512};
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
         ("bank,B"       , po::value<std::string>(&bankfile), "Specify pattern bank file")
         ("maxPatterns"  , po::value<int>(&maxPatterns)->default_value(-1), "Specfiy max number of patterns")
         ("maxRoads"     , po::value<int>(&maxRoads)->default_value(-1), "Specfiy max number of roads per event")
-        ("maxHits"      , po::value<int>(&maxHits)->default_value(-1), "Specfiy max number of hits per road")
+        ("maxStubs"     , po::value<int>(&maxStubs)->default_value(-1), "Specfiy max number of stubs per superstrip")
 
         // Only for track fitting
         ("maxTracks"    , po::value<int>(&maxTracks)->default_value(-1), "Specfiy max number of tracks per event")
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
         ("bank_minPhi"              , po::value<float>(&bankOption.minPhi)->default_value(-M_PI), "Specify min phi (from -pi to pi)")
         ("bank_maxPhi"              , po::value<float>(&bankOption.maxPhi)->default_value( M_PI), "Specify max phi (from -pi to pi)")
         ("bank_dividePhi"           , po::value<unsigned>(&dividePhi)->default_value(400), "Specify the number of phi divisions in one trigger tower in simplified geometry")
-        ("bank_divideZ"             , po::value<unsigned>(&divideZ)->default_value(1), "Specify the number of z divisions in one trigger tower in simplified geometry")
+        ("bank_divideEta"           , po::value<unsigned>(&divideEta)->default_value(0), "Specify the number of eta divisions in one trigger tower in simplified geometry")
         ("bank_subLadderSize"       , po::value<unsigned>(&bankOption.subLadderSize)->default_value(4), "Specify the size of a subladder (a.k.a. segment)")
         ("bank_subModuleSize"       , po::value<unsigned>(&bankOption.subModuleSize)->default_value(8), "Specify the size of a submodule (a.k.a. superstrip)")
         ("bank_nLayers"             , po::value<unsigned>(&bankOption.nLayers)->default_value(6), "Specify # of layers")
@@ -113,15 +113,9 @@ int main(int argc, char **argv) {
         ("bank_triggerTowers"       , po::value<std::vector<unsigned> >(&bankOption.triggerTowers)->default_value(dv_triggerTowers), "Specify the trigger towers")
 
         // Specifically for a track fitter
-        ("fit_pqType"               , po::value<int>(&fitOption.pqType)->default_value(0), "Specify choice of variables for p,q")
-        ("fit_pbins"                , po::value<int>(&fitOption.pbins)->default_value(100), "Specify # of bins for p")
-        ("fit_qbins"                , po::value<int>(&fitOption.qbins)->default_value(100), "Specify # of bins for q")
-        ("fit_pmin"                 , po::value<float>(&fitOption.pmin)->default_value(-1), "Specify min value for p")
-        ("fit_qmin"                 , po::value<float>(&fitOption.qmin)->default_value(-1), "Specify min value for q")
-        ("fit_pmax"                 , po::value<float>(&fitOption.pmax)->default_value(1), "Specify max value for p")
-        ("fit_qmax"                 , po::value<float>(&fitOption.qmax)->default_value(1), "Specify max value for q")
-        ("fit_sigma"                , po::value<float>(&fitOption.sigma)->default_value(3), "Specify resolution for the distance parameter")
-        ("fit_minWeight"            , po::value<float>(&fitOption.minWeight)->default_value(0.1), "Specify minimum weight to create a track")
+        ("fit_maxChi2Red"           , po::value<float>(&fitOption.maxChi2Red)->default_value(999.), "Specify maximum reduced chi-squared")
+        ("fit_minNdof"              , po::value<int>(&fitOption.minNdof)->default_value(0), "Specify minimum degree of freedom")
+        ("fit_mode"                 , po::value<unsigned>(&fitOption.mode)->default_value(0), "Select track fitter config -- 0: Linearized; 1: Das")
         ;
 
     // Hidden options, will be allowed both on command line and in config file,
@@ -162,9 +156,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // Options found in both PatternBankOption and TrackFitterOption
-    fitOption.nLayers = bankOption.nLayers;
-
     // At least one option needs to be called
     if (!(vm.count("cleanStubs")         ||
           vm.count("generateBank")       ||
@@ -193,8 +184,16 @@ int main(int argc, char **argv) {
     bankOption.nMisses          = std::min(std::max(0u, bankOption.nMisses), 3u);
     bankOption.nFakers          = std::min(std::max(0u, bankOption.nFakers), 3u);
     bankOption.nDCBits          = std::min(std::max(0u, bankOption.nDCBits), 4u);
-    bankOption.unitPhi          = (M_PI*2.) / float(dividePhi * 8);
-    bankOption.unitZ            = (360*2.) / float(divideZ * 6);
+
+    if (dividePhi == 0)
+        bankOption.unitPhi      = (M_PI*2.);
+    else
+        bankOption.unitPhi      = (M_PI*2.) / float(dividePhi * 8);
+    if (divideEta == 0)
+        bankOption.unitEta      = (2.2*2.);
+    else
+        bankOption.unitEta      = (2.2*2.) / float(divideEta * 6);
+
     if (!bankOption.subLadderVarSize.empty())
         for (unsigned i=0; i<bankOption.subLadderVarSize.size(); ++i)
             bankOption.subLadderVarSize.at(i) = std::min(std::max(1u, bankOption.subLadderVarSize.at(i)), 32u);
@@ -301,7 +300,7 @@ int main(int argc, char **argv) {
         matcher.setMinFrequency(minFrequency);
         matcher.setMaxPatterns(maxPatterns);
         matcher.setMaxRoads(maxRoads);
-        matcher.setMaxHits(maxHits);
+        matcher.setMaxStubs(maxStubs);
         matcher.setVerbosity(verbose);
         int exitcode = matcher.run(input, bankfile, output);
         if (exitcode) {

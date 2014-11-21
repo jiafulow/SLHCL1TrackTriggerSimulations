@@ -3,14 +3,12 @@
 
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterOption.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgo.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoLinearized.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoDas.h"
 using namespace slhcl1tt;
 
 
-// This code is entirely based on [lucamartini/CMS](https://github.com/lucamartini/CMS)
-// but currently in a BROKEN state
-
-// SETTINGS: resolution for pq, pqType, etc
+// SETTINGS: ...
 // INPUT   : Roads
 // OUTPUT  : Tracks
 
@@ -18,16 +16,25 @@ class TrackFitter {
   public:
     // Constructor
     TrackFitter(TrackFitterOption option)
-    : po(option), nLayers_(po.nLayers),
+    : po(option),
       prefixRoad_("AMTTRoads_"), prefixTrack_("AMTTTracks_"), suffix_(""),
       nEvents_(999999999), maxTracks_(999999999),
       verbose_(1) {
 
-        assert(3 <= nLayers_ && nLayers_ <= 8);
+        // Decide the track fitter to use
+        fitterLin_ = 0;
+        fitterDas_ = 0;
+        if (po.mode == 0)
+            fitterLin_ = new TrackFitterAlgoLinearized();
+        else
+            fitterDas_ = new TrackFitterAlgoDas();
     }
 
     // Destructor
-    ~TrackFitter() {}
+    ~TrackFitter() {
+        if (fitterLin_) delete fitterLin_;
+        if (fitterDas_) delete fitterDas_;
+    }
 
 
     // Setters
@@ -48,7 +55,6 @@ class TrackFitter {
   private:
     // Configurations
     const TrackFitterOption po;
-    const unsigned nLayers_;
     const TString prefixRoad_;
     const TString prefixTrack_;
     const TString suffix_;
@@ -57,6 +63,10 @@ class TrackFitter {
     long long nEvents_;
     int maxTracks_;  // max number of tracks per event
     int verbose_;
+
+    // Track Fitters
+    TrackFitterAlgoLinearized * fitterLin_;
+    TrackFitterAlgoDas * fitterDas_;
 };
 
 #endif

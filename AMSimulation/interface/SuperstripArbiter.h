@@ -41,8 +41,8 @@ class SuperstripArbiter {
 
     unsigned module(unsigned lay, unsigned lad, unsigned mod) const;
 
-    unsigned superstrip_luciano(unsigned lay, float phi, float z,
-                                const float unit_phi, const float unit_z) const;
+    unsigned superstrip_luciano(unsigned lay, float phi, float eta,
+                                const float unit_phi, const float unit_eta) const;
 
     // Debug
     void print();

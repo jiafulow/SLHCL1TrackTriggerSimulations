@@ -136,13 +136,13 @@ NTupleStubs::NTupleStubs(const edm::ParameterSet& iConfig) :
     //produces<std::vector<std::vector<int> > >       (prefixClus_ + "hitCols"        + suffix_);
     //produces<std::vector<std::vector<int> > >       (prefixClus_ + "hitRows"        + suffix_);
     //produces<std::vector<std::vector<int> > >       (prefixClus_ + "hitADCs"        + suffix_);
-    produces<std::vector<std::vector<int> > >       (prefixClus_ + "hitChans"       + suffix_);
-    produces<std::vector<std::vector<int> > >       (prefixClus_ + "hitTrkIds"      + suffix_);
-    produces<std::vector<std::vector<unsigned> > >  (prefixClus_ + "hitEvtIds"      + suffix_);
+    //produces<std::vector<std::vector<int> > >       (prefixClus_ + "hitChans"       + suffix_);
+    //produces<std::vector<std::vector<int> > >       (prefixClus_ + "hitTrkIds"      + suffix_);
+    //produces<std::vector<std::vector<unsigned> > >  (prefixClus_ + "hitEvtIds"      + suffix_);
     //produces<std::vector<std::vector<float> > >     (prefixClus_ + "hitFracs"       + suffix_);
-    produces<std::vector<std::vector<float> > >     (prefixClus_ + "hitXs"          + suffix_);
-    produces<std::vector<std::vector<float> > >     (prefixClus_ + "hitYs"          + suffix_);
-    produces<std::vector<std::vector<float> > >     (prefixClus_ + "hitZs"          + suffix_);
+    //produces<std::vector<std::vector<float> > >     (prefixClus_ + "hitXs"          + suffix_);
+    //produces<std::vector<std::vector<float> > >     (prefixClus_ + "hitYs"          + suffix_);
+    //produces<std::vector<std::vector<float> > >     (prefixClus_ + "hitZs"          + suffix_);
     produces<std::vector<bool> >                    (prefixClus_ + "isGenuine"      + suffix_);
     produces<std::vector<bool> >                    (prefixClus_ + "isUnknown"      + suffix_);
     produces<std::vector<bool> >                    (prefixClus_ + "isCombinatoric" + suffix_);
@@ -186,6 +186,7 @@ NTupleStubs::NTupleStubs(const edm::ParameterSet& iConfig) :
     produces<std::vector<unsigned> >                (prefixStub_ + "geoId1"         + suffix_);
     produces<std::vector<unsigned> >                (prefixStub_ + "clusId0"        + suffix_);
     produces<std::vector<unsigned> >                (prefixStub_ + "clusId1"        + suffix_);
+    produces<std::vector<unsigned> >                (prefixStub_ + "clusWidth"      + suffix_);
     produces<std::vector<unsigned> >                (prefixStub_ + "nhits"          + suffix_);
     //produces<std::vector<std::vector<int> > >       (prefixStub_ + "hitCols"        + suffix_);
     //produces<std::vector<std::vector<int> > >       (prefixStub_ + "hitRows"        + suffix_);
@@ -401,13 +402,13 @@ void NTupleStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     //std::auto_ptr<std::vector<std::vector<int> > >      vc_hitCols          (new std::vector<std::vector<int> >());
     //std::auto_ptr<std::vector<std::vector<int> > >      vc_hitRows          (new std::vector<std::vector<int> >());
     //std::auto_ptr<std::vector<std::vector<int> > >      vc_hitADCs          (new std::vector<std::vector<int> >());
-    std::auto_ptr<std::vector<std::vector<int> > >      vc_hitChans         (new std::vector<std::vector<int> >());
-    std::auto_ptr<std::vector<std::vector<int> > >      vc_hitTrkIds        (new std::vector<std::vector<int> >());
-    std::auto_ptr<std::vector<std::vector<unsigned> > > vc_hitEvtIds        (new std::vector<std::vector<unsigned> >());
+    //std::auto_ptr<std::vector<std::vector<int> > >      vc_hitChans         (new std::vector<std::vector<int> >());
+    //std::auto_ptr<std::vector<std::vector<int> > >      vc_hitTrkIds        (new std::vector<std::vector<int> >());
+    //std::auto_ptr<std::vector<std::vector<unsigned> > > vc_hitEvtIds        (new std::vector<std::vector<unsigned> >());
     //std::auto_ptr<std::vector<std::vector<float> > >    vc_hitFracs         (new std::vector<std::vector<float> >());
-    std::auto_ptr<std::vector<std::vector<float> > >    vc_hitXs            (new std::vector<std::vector<float> >());
-    std::auto_ptr<std::vector<std::vector<float> > >    vc_hitYs            (new std::vector<std::vector<float> >());
-    std::auto_ptr<std::vector<std::vector<float> > >    vc_hitZs            (new std::vector<std::vector<float> >());
+    //std::auto_ptr<std::vector<std::vector<float> > >    vc_hitXs            (new std::vector<std::vector<float> >());
+    //std::auto_ptr<std::vector<std::vector<float> > >    vc_hitYs            (new std::vector<std::vector<float> >());
+    //std::auto_ptr<std::vector<std::vector<float> > >    vc_hitZs            (new std::vector<std::vector<float> >());
     std::auto_ptr<std::vector<bool> >                   vc_isGenuine        (new std::vector<bool>());
     std::auto_ptr<std::vector<bool> >                   vc_isUnknown        (new std::vector<bool>());
     std::auto_ptr<std::vector<bool> >                   vc_isCombinatoric   (new std::vector<bool>());
@@ -451,6 +452,7 @@ void NTupleStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     std::auto_ptr<std::vector<unsigned> >               vb_geoId1           (new std::vector<unsigned>());
     std::auto_ptr<std::vector<unsigned> >               vb_clusId0          (new std::vector<unsigned>());
     std::auto_ptr<std::vector<unsigned> >               vb_clusId1          (new std::vector<unsigned>());
+    std::auto_ptr<std::vector<unsigned> >               vb_clusWidth        (new std::vector<unsigned>());
     std::auto_ptr<std::vector<unsigned> >               vb_nhits            (new std::vector<unsigned>());
     //std::auto_ptr<std::vector<std::vector<int> > >      vb_hitCols          (new std::vector<std::vector<int> >());
     //std::auto_ptr<std::vector<std::vector<int> > >      vb_hitRows          (new std::vector<std::vector<int> >());
@@ -586,7 +588,7 @@ void NTupleStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
                 /// Module ID
                 unsigned stack = it->getStackMember();  // inner sensor=0, outer sensor=1
-                unsigned width = it->findWidth();  // cluster width in xy
+                unsigned width = it->findWidth();  // cluster width
                 const DetId geoId = theStackedGeometry->idToDet(detId, stack)->geographicalId();
                 //unsigned iModuleLayer = getModuleLayer(geoId);
                 //unsigned iModuleLadder = getModuleLadder(geoId);
@@ -647,27 +649,27 @@ void NTupleStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
                 //const std::vector<int>& hitRows = it->getRows();
                 unsigned nhits = it->getCols().size();
                 //std::vector<int> hitADCs;  // should be unsigned, but use int for uniformity
-                std::vector<int> hitChans;
-                std::vector<int> hitTrkIds;
-                std::vector<unsigned> hitEvtIds;
+                //std::vector<int> hitChans;
+                //std::vector<int> hitTrkIds;
+                //std::vector<unsigned> hitEvtIds;
                 //std::vector<float> hitFracs;
-                std::vector<float> hitXs;
-                std::vector<float> hitYs;
-                std::vector<float> hitZs;
-                for (unsigned ii = 0; ii < nhits; ++ii) {
+                //std::vector<float> hitXs;
+                //std::vector<float> hitYs;
+                //std::vector<float> hitZs;
+                //for (unsigned ii = 0; ii < nhits; ++ii) {
                     //hitADCs.push_back(0);         // to be updated when digis are found
-                    hitChans.push_back(0);        // to be updated when digis are found
-                    hitTrkIds.push_back(-1);      // to be updated when sim links are found
-                    hitEvtIds.push_back(999999);  // to be updated when sim links are found
+                    //hitChans.push_back(0);        // to be updated when digis are found
+                    //hitTrkIds.push_back(-1);      // to be updated when sim links are found
+                    //hitEvtIds.push_back(999999);  // to be updated when sim links are found
                     //hitFracs.push_back(0.);       // to be updated when sim links are found
 
                     // Don't save local position as it's nothing more but (row+0.5, col+0.5)
                     //const LocalPoint& hitLocalPosition = theStackedGeometry->findHitLocalPosition(&(*it), ii);
-                    const GlobalPoint& hitPosition = theStackedGeometry->findHitGlobalPosition(&(*it), ii);
-                    hitXs.push_back(hitPosition.x());
-                    hitYs.push_back(hitPosition.y());
-                    hitZs.push_back(hitPosition.z());
-                }
+                    //const GlobalPoint& hitPosition = theStackedGeometry->findHitGlobalPosition(&(*it), ii);
+                    //hitXs.push_back(hitPosition.x());
+                    //hitYs.push_back(hitPosition.y());
+                    //hitZs.push_back(hitPosition.z());
+                //}
 
                 const MeasurementPoint& localcoord = it->findAverageLocalCoordinates();
                 const LocalPoint&  localposition = theStackedGeometry->findAverageLocalPosition(&(*it));
@@ -713,37 +715,37 @@ void NTupleStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
                 vc_nhits->push_back(nhits);
                 //vc_hitCols->push_back(hitCols);
                 //vc_hitRows->push_back(hitRows);
-                vc_hitXs->push_back(hitXs);
-                vc_hitYs->push_back(hitYs);
-                vc_hitZs->push_back(hitZs);
+                //vc_hitXs->push_back(hitXs);
+                //vc_hitYs->push_back(hitYs);
+                //vc_hitZs->push_back(hitZs);
 
                 /// Digis
                 if (pixelDigis.isValid()) {
-                    const std::vector<Ref_PixelDigi_>& hits = it->getHits();
-                    for (unsigned ii = 0; ii < nhits; ++ii) {
+                    //const std::vector<Ref_PixelDigi_>& hits = it->getHits();
+                    //for (unsigned ii = 0; ii < nhits; ++ii) {
                         //hitADCs.at(ii) = hits.at(ii)->adc();
-                        hitChans.at(ii) = hits.at(ii)->channel();
-                    }
+                        //hitChans.at(ii) = hits.at(ii)->channel();
+                    //}
                 }
                 //vc_hitADCs->push_back(hitADCs);
-                vc_hitChans->push_back(hitChans);
+                //vc_hitChans->push_back(hitChans);
 
                 /// Sim links for the digis
                 if (pixelDigiSimLinks.isValid()) {
-                    const edm::DetSet<PixelDigiSimLink>& simlink = (*pixelDigiSimLinks)[geoId];
-                    for (unsigned ii = 0; ii < nhits; ++ii) {
-                        for (edm::DetSet<PixelDigiSimLink>::const_iterator itsim = simlink.data.begin(); itsim != simlink.data.end(); ++itsim) {
-                            if (hitChans.at(ii) == (int) itsim->channel()) {
-                                hitTrkIds.at(ii) = itsim->SimTrackId();
-                                hitEvtIds.at(ii) = itsim->eventId().rawId();
+                    //const edm::DetSet<PixelDigiSimLink>& simlink = (*pixelDigiSimLinks)[geoId];
+                    //for (unsigned ii = 0; ii < nhits; ++ii) {
+                        //for (edm::DetSet<PixelDigiSimLink>::const_iterator itsim = simlink.data.begin(); itsim != simlink.data.end(); ++itsim) {
+                            //if (hitChans.at(ii) == (int) itsim->channel()) {
+                                //hitTrkIds.at(ii) = itsim->SimTrackId();
+                                //hitEvtIds.at(ii) = itsim->eventId().rawId();
                                 //hitFracs.at(ii) = itsim->fraction();
-                                break;
-                            }
-                        }
-                    }
+                                //break;
+                            //}
+                        //}
+                    //}
                 }
-                vc_hitTrkIds->push_back(hitTrkIds);
-                vc_hitEvtIds->push_back(hitEvtIds);
+                //vc_hitTrkIds->push_back(hitTrkIds);
+                //vc_hitEvtIds->push_back(hitEvtIds);
                 //vc_hitFracs->push_back(hitFracs);
 
                 /// Make the reference to retrieve from MC matching
@@ -905,6 +907,7 @@ void NTupleStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
                 const Surface::PositionType& surfposition1 = theStackedGeometry->idToDet(detId, 1)->position();
                 const float separation = (moduleId < 110000) ? surfposition1.perp() - surfposition0.perp() : ((moduleId < 180000) ? surfposition1.z() - surfposition0.z() : surfposition0.z() - surfposition1.z());
 
+                unsigned clusWidth = clusterRef->findWidth();  // cluster width
                 const MeasurementPoint& localcoord = clusterRef->findAverageLocalCoordinates();
 
                 edm::LogInfo("NTupleStubs") << "stackId: " << stackId << " iLayer: " << iLayer << " iRing: " << iRing << " iSide: " << iSide << " iPhi: " << iPhi << " iZ: " << iZ << " isBarrel: " << isBarrel << " roughPt: " << roughPt << " position: " << position << " direction: " << direction << " geoId0: " << geoId0.rawId() << " geoId1: " << geoId1.rawId() << " clusId0: " << clusId0 << " clusId1: " << clusId1 << " moduleId: " << moduleId;
@@ -941,6 +944,7 @@ void NTupleStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
                 vb_geoId1->push_back(geoId1.rawId());
                 vb_clusId0->push_back(clusId0);                 // sviret/HL_LHC: STUB_clust1
                 vb_clusId1->push_back(clusId1);                 // sviret/HL_LHC: STUB_clust2
+                vb_clusWidth->push_back(clusWidth);
                 vb_nhits->push_back(nhits);
                 //vb_hitCols->push_back(hitCols);                 // sviret/HL_LHC: STUB_pix
                 //vb_hitRows->push_back(hitRows);
@@ -1214,13 +1218,13 @@ void NTupleStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     //iEvent.put(vc_hitCols       , prefixClus_ + "hitCols"        + suffix_);
     //iEvent.put(vc_hitRows       , prefixClus_ + "hitRows"        + suffix_);
     //iEvent.put(vc_hitADCs       , prefixClus_ + "hitADCs"        + suffix_);
-    iEvent.put(vc_hitChans      , prefixClus_ + "hitChans"       + suffix_);
-    iEvent.put(vc_hitTrkIds     , prefixClus_ + "hitTrkIds"      + suffix_);
-    iEvent.put(vc_hitEvtIds     , prefixClus_ + "hitEvtIds"      + suffix_);
+    //iEvent.put(vc_hitChans      , prefixClus_ + "hitChans"       + suffix_);
+    //iEvent.put(vc_hitTrkIds     , prefixClus_ + "hitTrkIds"      + suffix_);
+    //iEvent.put(vc_hitEvtIds     , prefixClus_ + "hitEvtIds"      + suffix_);
     //iEvent.put(vc_hitFracs      , prefixClus_ + "hitFracs"       + suffix_);
-    iEvent.put(vc_hitXs         , prefixClus_ + "hitXs"          + suffix_);
-    iEvent.put(vc_hitYs         , prefixClus_ + "hitYs"          + suffix_);
-    iEvent.put(vc_hitZs         , prefixClus_ + "hitZs"          + suffix_);
+    //iEvent.put(vc_hitXs         , prefixClus_ + "hitXs"          + suffix_);
+    //iEvent.put(vc_hitYs         , prefixClus_ + "hitYs"          + suffix_);
+    //iEvent.put(vc_hitZs         , prefixClus_ + "hitZs"          + suffix_);
     iEvent.put(vc_isGenuine     , prefixClus_ + "isGenuine"      + suffix_);
     iEvent.put(vc_isUnknown     , prefixClus_ + "isUnknown"      + suffix_);
     iEvent.put(vc_isCombinatoric, prefixClus_ + "isCombinatoric" + suffix_);
@@ -1264,6 +1268,7 @@ void NTupleStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     iEvent.put(vb_geoId1        , prefixStub_ + "geoId1"         + suffix_);
     iEvent.put(vb_clusId0       , prefixStub_ + "clusId0"        + suffix_);
     iEvent.put(vb_clusId1       , prefixStub_ + "clusId1"        + suffix_);
+    iEvent.put(vb_clusWidth     , prefixStub_ + "clusWidth"      + suffix_);
     iEvent.put(vb_nhits         , prefixStub_ + "nhits"          + suffix_);
     //iEvent.put(vb_hitCols       , prefixStub_ + "hitCols"        + suffix_);
     //iEvent.put(vb_hitRows       , prefixStub_ + "hitRows"        + suffix_);

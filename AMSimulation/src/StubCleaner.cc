@@ -40,18 +40,6 @@ int StubCleaner::cleanStubs(TString src, TString out) {
     } else {
         TChain* tchain = reader.getChain();
         tchain->SetBranchStatus("*"                 , 0);
-      //tchain->SetBranchStatus("TTStubs_x"         , 1);  // sync with TTStubReader
-      //tchain->SetBranchStatus("TTStubs_y"         , 1);  // sync with TTStubReader
-        tchain->SetBranchStatus("TTStubs_z"         , 1);
-        tchain->SetBranchStatus("TTStubs_r"         , 1);
-        tchain->SetBranchStatus("TTStubs_eta"       , 1);
-        tchain->SetBranchStatus("TTStubs_phi"       , 1);
-        tchain->SetBranchStatus("TTStubs_coordx"    , 1);
-        tchain->SetBranchStatus("TTStubs_coordy"    , 1);
-      //tchain->SetBranchStatus("TTStubs_roughPt"   , 1);  // sync with TTStubReader
-      //tchain->SetBranchStatus("TTStubs_trigBend"  , 1);  // sync with TTStubReader
-        tchain->SetBranchStatus("TTStubs_modId"     , 1);
-        tchain->SetBranchStatus("TTStubs_trkId"     , 1);
         tchain->SetBranchStatus("genParts_pt"       , 1);
         tchain->SetBranchStatus("genParts_eta"      , 1);
         tchain->SetBranchStatus("genParts_phi"      , 1);
@@ -59,15 +47,28 @@ int StubCleaner::cleanStubs(TString src, TString out) {
         tchain->SetBranchStatus("genParts_vy"       , 1);
         tchain->SetBranchStatus("genParts_vz"       , 1);
         tchain->SetBranchStatus("genParts_charge"   , 1);
+      //tchain->SetBranchStatus("TTStubs_x"         , 1);  // sync with BasicReader::init()
+      //tchain->SetBranchStatus("TTStubs_y"         , 1);  // sync with BasicReader::init()
+        tchain->SetBranchStatus("TTStubs_z"         , 1);
+        tchain->SetBranchStatus("TTStubs_r"         , 1);
+        tchain->SetBranchStatus("TTStubs_eta"       , 1);
+        tchain->SetBranchStatus("TTStubs_phi"       , 1);
+        tchain->SetBranchStatus("TTStubs_coordx"    , 1);
+        tchain->SetBranchStatus("TTStubs_coordy"    , 1);
+      //tchain->SetBranchStatus("TTStubs_roughPt"   , 1);  // sync with BasicReader::init()
+        tchain->SetBranchStatus("TTStubs_trigBend"  , 1);
+      //tchain->SetBranchStatus("TTStubs_clusWidth" , 1);  // sync with BasicReader::init()
+        tchain->SetBranchStatus("TTStubs_modId"     , 1);
+        tchain->SetBranchStatus("TTStubs_tpId"      , 1);
     }
 
     // For event selection
     TTreeFormula* ttf_event = reader.addFormula(eventSelect_);
 
     // For writing
-    TTStubCloner cloner(verbose_);
-    if (cloner.init(reader.getChain(), out)) {
-        std::cout << Error() << "Failed to initialize TTStubCloner." << std::endl;
+    TTStubWriter writer(verbose_);
+    if (writer.init(reader.getChain(), out)) {
+        std::cout << Error() << "Failed to initialize TTStubWriter." << std::endl;
         return 1;
     }
 
@@ -75,7 +76,7 @@ int StubCleaner::cleanStubs(TString src, TString out) {
     // _________________________________________________________________________
     // Loop over all events
 
-    const int good_trkId = 1, unmatch_trkId = -1;
+    const int good_tpId = 0, unmatch_tpId = -1;
 
     // Bookkeepers
     int nPassed = 0, nKept = 0;
@@ -90,7 +91,7 @@ int StubCleaner::cleanStubs(TString src, TString out) {
 
         if (!nstubs) {  // skip if no stub
             ++nKept;
-            cloner.fill();
+            writer.fill();
             continue;
         }
 
@@ -118,7 +119,10 @@ int StubCleaner::cleanStubs(TString src, TString out) {
         float simPt    = reader.vp_pt->front();
         float simEta   = reader.vp_eta->front();
         float simPhi   = reader.vp_phi->front();
-        float simTheta = simPt > 0.0 ? (2.0 * std::atan(std::exp(-simEta)) ) : (simEta >= 0 ? 0 : M_PI);
+        float simVx    = reader.vp_vx->front();
+        float simVy    = reader.vp_vy->front();
+        float simVz    = reader.vp_vz->front();
+        int simCharge  = reader.vp_charge->front();
 
         // Apply pt, eta, phi requirements
         bool sim = (po.minPt  <= simPt  && simPt  <= po.maxPt  &&
@@ -131,39 +135,42 @@ int StubCleaner::cleanStubs(TString src, TString out) {
 
         // _____________________________________________________________________
         // Remove multiple stubs in one layer
-        std::vector<std::pair<unsigned, float> > vec_index_dZ;
+        std::vector<std::pair<unsigned, float> > vec_index_dist;
         for (unsigned l=0; (l<nstubs) && keep; ++l) {
-            int trkId = reader.vb_trkId->at(l);  // check sim info
-            if (trkId == good_trkId || trkId == unmatch_trkId) {  // also catch stubs that fail to find a matched simTrack
+            int tpId = reader.vb_tpId->at(l);  // check sim info
+            if (tpId == good_tpId || tpId == unmatch_tpId) {  // also catch stubs that fail to find a matched simTrack
                 //float stub_eta = reader.vb_eta->at(l);
                 //float dEta = std::abs(simEta - stub_eta);
                 //if (dEta > 0.8)  // way too far
                 //    continue;
-                float dZ = std::abs(reader.vb_r->at(l) / std::tan(simTheta) - reader.vb_z->at(l));
-                vec_index_dZ.push_back(std::make_pair(l, dZ));
+
+                float bendPhi = simPhi - 0.3*3.8*reader.vb_r->at(l)*1e-2 * (simCharge/simPt) / 2.0;
+                float dX = simVx + reader.vb_r->at(l) * (std::cos(bendPhi) - std::cos(reader.vb_phi->at(l)));
+                float dY = simVy + reader.vb_r->at(l) * (std::sin(bendPhi) - std::sin(reader.vb_phi->at(l)));
+                float dZ = simVz + reader.vb_r->at(l) * std::sinh(simEta) - reader.vb_z->at(l);  // cot(theta) = sinh(eta)
+                float dR = std::sqrt(dX*dX + dY*dY + dZ*dZ);
+                vec_index_dist.push_back(std::make_pair(l, dR));
             }
         }
 
-        // Sort: smallest dZ to largest
-        std::sort(vec_index_dZ.begin(), vec_index_dZ.end(), sortByFloat);
+        // Sort: smallest dR to largest
+        std::sort(vec_index_dist.begin(), vec_index_dist.end(), sortByFloat);
 
         // Select only one stub per layer
         std::vector<unsigned> goodLayerStubs(16, 999999);
-        if (vec_index_dZ.size()) {
+        if (vec_index_dist.size()) {
             id_type moduleId, lay, lay16;
-            unsigned l;
-            float dZ;
-            for (unsigned ll=0; (ll<vec_index_dZ.size()) && keep; ++ll) {
-                l  = vec_index_dZ.at(ll).first;
-                dZ = vec_index_dZ.at(ll).second;
+            for (unsigned ll=0; (ll<vec_index_dist.size()) && keep; ++ll) {
+                unsigned l = vec_index_dist.at(ll).first;
+                float dist = vec_index_dist.at(ll).second;
 
                 moduleId = reader.vb_modId->at(l);
                 lay      = decodeLayer(moduleId);
                 lay16    = compressLayer(lay);
                 assert(lay16 < 16);
 
-                // For each layer, takes the stub with min dZ to simTrack
-                if (goodLayerStubs.at(lay16) == 999999 && dZ < 26.0) {  // CUIDADO: gets rid of stubs due to loopers
+                // For each layer, takes the stub with min dR to simTrack
+                if (goodLayerStubs.at(lay16) == 999999 && dist < 26.0) {  // CUIDADO: gets rid of stubs due to loopers
                     goodLayerStubs.at(lay16) = l;
                 }
             }
@@ -183,7 +190,7 @@ int StubCleaner::cleanStubs(TString src, TString out) {
             bool keepstub = true;
 
             moduleId = reader.vb_modId->at(l);
-            if (verbose_>2)  std::cout << Debug() << "... ... stub: " << l << " moduleId: " << moduleId << " trkId: " << reader.vb_trkId->at(l) << std::endl;
+            if (verbose_>2)  std::cout << Debug() << "... ... stub: " << l << " moduleId: " << moduleId << " tpId: " << reader.vb_tpId->at(l) << std::endl;
 
             // Check whether the index l was stored as a good stub
             const unsigned& count = std::count(goodLayerStubs.begin(), goodLayerStubs.end(), l);
@@ -208,9 +215,9 @@ int StubCleaner::cleanStubs(TString src, TString out) {
                 insertSorted(reader.vb_coordx->begin()   , ipos, ngoodstubs, reader.vb_coordx->at(l));
                 insertSorted(reader.vb_coordy->begin()   , ipos, ngoodstubs, reader.vb_coordy->at(l));
               //insertSorted(reader.vb_roughPt->begin()  , ipos, ngoodstubs, reader.vb_roughPt->at(l));
-              //insertSorted(reader.vb_trigBend->begin() , ipos, ngoodstubs, reader.vb_trigBend->at(l));
+                insertSorted(reader.vb_trigBend->begin() , ipos, ngoodstubs, reader.vb_trigBend->at(l));
                 insertSorted(reader.vb_modId->begin()    , ipos, ngoodstubs, reader.vb_modId->at(l));
-                insertSorted(reader.vb_trkId->begin()    , ipos, ngoodstubs, reader.vb_trkId->at(l));
+                insertSorted(reader.vb_tpId->begin()     , ipos, ngoodstubs, reader.vb_tpId->at(l));
 
                 ++ngoodstubs;  // remember to increment
             }
@@ -246,16 +253,16 @@ int StubCleaner::cleanStubs(TString src, TString out) {
         reader.vb_coordx   ->resize(ngoodstubs);
         reader.vb_coordy   ->resize(ngoodstubs);
       //reader.vb_roughPt  ->resize(ngoodstubs);
-      //reader.vb_trigBend ->resize(ngoodstubs);
+        reader.vb_trigBend ->resize(ngoodstubs);
         reader.vb_modId    ->resize(ngoodstubs);
-        reader.vb_trkId    ->resize(ngoodstubs);
+        reader.vb_tpId     ->resize(ngoodstubs);
 
         ++nKept;
-        cloner.fill();
+        writer.fill();
     }
     if (verbose_)  std::cout << Info() << "Processed and kept " << nKept << " events, passed " << nPassed << std::endl;
 
-    long long nentries = cloner.write();
+    long long nentries = writer.writeTree();
     assert(nentries == nKept);
 
     return 0;

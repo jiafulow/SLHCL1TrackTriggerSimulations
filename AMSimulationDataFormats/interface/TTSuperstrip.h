@@ -2,9 +2,8 @@
 #define AMSimulationDataFormats_TTSuperstrip_h_
 
 #include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/Helper.h"
-
 #include <iosfwd>
-
+#include <vector>
 
 namespace slhcl1tt {
 
@@ -27,20 +26,6 @@ struct TTHit {
     float rError;
     float phiError;
     float zError;
-    float clusWidth;  // cluster width
-    float stubWidth;  // stub width
-    id_type superstripId;
-    int trkId;
-
-    // Functions
-    // Simple trigonometrics
-    float x()                       const { return r * std::cos(phi); }
-    float y()                       const { return r * std::sin(phi); }
-    float theta()                   const { return std::atan2(r, z); }
-
-    // Conformal transformantion
-    float u()                       const { return x() / (r*r); }
-    float v()                       const { return y() / (r*r); }
 };
 
 
@@ -49,6 +34,8 @@ struct TTHit {
 std::ostream& operator<<(std::ostream& o, const TTSuperstrip& ss);
 
 std::ostream& operator<<(std::ostream& o, const TTHit& hit);
+
+std::ostream& operator<<(std::ostream& o, const std::vector<TTHit>& hits);
 
 }  // namespace slhcl1tt
 

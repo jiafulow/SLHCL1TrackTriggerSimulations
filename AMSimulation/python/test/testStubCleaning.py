@@ -32,11 +32,11 @@ class TestAMSim(unittest.TestCase):
                 lay = modId/10000
                 self.assertTrue(lay in allowed_layers)
 
-    def test_trkId(self):
+    def test_tpId(self):
         tree = self.ttree
         for ievt in tree:
-            for trkId in ievt.TTStubs_trkId:
-                self.assertTrue(trkId == 1 or trkId == -1)
+            for tpId in ievt.TTStubs_tpId:
+                self.assertTrue(tpId == 0 or tpId == -1)
 
     #def test_nhits(self):
     #    tree = self.ttree
@@ -54,8 +54,8 @@ class TestAMSim(unittest.TestCase):
                 self.assertTrue(layer not in layers)
                 layers.append(layer)
 
-            for trkId in ievt.TTStubs_trkId:
-                self.assertEqual(trkId, 1)
+            for tpId in ievt.TTStubs_tpId:
+                self.assertEqual(tpId, 0)
 
             nstubs = ievt.TTStubs_modId.size()
             self.assertTrue(nstubs <= 8)
@@ -66,15 +66,15 @@ class TestAMSim(unittest.TestCase):
         countB = 0
         countsA = [0] * 9
         for ievt in tree:
-            for modId, trkId in izip(ievt.TTStubs_modId, ievt.TTStubs_trkId):
+            for modId, tpId in izip(ievt.TTStubs_modId, ievt.TTStubs_tpId):
                 countA += 1
-                if trkId == 1:
+                if tpId == 0:
                     countB += 1
             nstubs = ievt.TTStubs_modId.size()
             countsA[nstubs] += 1
-        self.assertEqual(countA, 583)
-        self.assertEqual(countB, 583)
-        self.assertEqual(countsA, [1,0,0,0,5,16,63,15,0])
+        self.assertEqual(countA, 588)
+        self.assertEqual(countB, 588)
+        self.assertEqual(countsA, [0,0,0,0,6,16,62,16,0])
         self.assertEqual(sum(countsA), 100)
         self.assertEqual(sum([i * cnt for i,cnt in enumerate(countsA)]), countA)
 

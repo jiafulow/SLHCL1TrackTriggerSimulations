@@ -2,6 +2,7 @@
 
 from rootdrawing import *
 from roothelper import *
+from math import pi
 import itertools
 import os
 
@@ -23,24 +24,24 @@ gStyle.SetPalette(55)  # rainbow color map
 
 
 EOS = "/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_results/"
+DATE = "20141108"
+
 RES = "SingleMuPlusMinus_sp16_%s"
 #RES = "SingleElePlusMinus_sp16_%s"
 #RES = "SinglePionPlusMinus_sp16_%s"
 #RES = "SingleKaonPlusMinus_sp16_%s"
 
-DATE = "20140926"
-
 settings = [
-    ("ss256"  ,  87631104),
+    ("ss256"  ,  87631104, 0.9999),
 ]
 
 settings_tt27 = [
-    ("ss1024" ,   479095),
-    ("ss512"  ,  1382352),
-    ("ss256"  ,  4109588),
-    ("ss128"  , 11612095),
-    ("ss64"   , 29093132),
-    ("ss32"   , 64981077),
+    ("ss32"  ,   42222520,  0.9034),
+    ("ss64"  ,   16960498,  0.9725),
+    ("ss128" ,    6240499,  0.9931),
+    ("ss256" ,    2042708,  0.9983),
+    ("ss512" ,     637157,  0.9997),
+    ("ss1024",     222227,  0.9999),
 ]
 
 col  = TColor.GetColor("#1f78b4")  # Paired
@@ -56,7 +57,7 @@ if samples["tt27"]:
     imgdir = "figures_amsim_tt27/"
 
 if samples["nu140"]:
-    EOS = EOS.replace("_results","_results_PU140bx25")
+    EOS = EOS.replace("_results","_results_PU140")
     RES = "Neutrino_sp16_%s"
 
     col = TColor.GetColor("#e31a1c")  # Paired
@@ -64,7 +65,7 @@ if samples["nu140"]:
     imgdir = "figures_amsim_nu140/"
 
 if samples["tt27_nu140"]:
-    EOS = EOS.replace("_results","_results_PU140bx25")
+    EOS = EOS.replace("_results","_results_PU140")
     RES = "Neutrino_sp16_%s_tt27"
     settings = settings_tt27
 
@@ -90,7 +91,7 @@ ttmap = json.load(open("../data/trigger_sector_map.json"), object_pairs_hook=con
 ttrmap = get_reverse_map(ttmap)
 
 def listdir_fullpath(d):
-    return [os.path.join(d, f) for f in os.listdir(d)]
+    return [os.path.join(d, f) for f in os.listdir(d) if f.endswith(".root")]
 
 
 # ______________________________________________________________________________
@@ -106,7 +107,7 @@ if sections["coverage"]:
     def bookCoverage():
         histos = {}
 
-        # 1D: pt, pt (zoom), eta, phi, vz
+        # 1D: pt, pt (zoom), eta, phi, vz, charge
         ytitle = "coverage"
         # NOTE: what is previously called "acceptance" has been changed to "AM PR efficiency"
         #       but the "ac_" prefix is still used in code
@@ -132,6 +133,10 @@ if sections["coverage"]:
             hname = "vz_%i" % i
             histos[hname] = TProfile(hname, "; vertex z_{0} [cm]; %s" % ytitle, 120, -30, 30, 0., 2., "")
             histos["ac_"+hname] = TProfile("ac_"+hname, "; vertex z_{0} [cm]; %s" % ac_ytitle, 120, -30, 30, 0., 2., "")
+
+            hname = "charge_%i" % i
+            histos[hname] = TProfile(hname, "; charge; %s" % ytitle, 5, -2.5, 2.5, 0., 2., "")
+            histos["ac_"+hname] = TProfile("ac_"+hname, "; charge; %s" % ytitle, 5, -2.5, 2.5, 0., 2., "")
 
         colors1 = blkrgb[:3]
         colors2 = blkrgb[:1] + blkrgb[3:]
@@ -162,61 +167,68 @@ if sections["coverage"]:
         tree.SetBranchStatus("genParts_eta"          , 1)
         tree.SetBranchStatus("genParts_phi"          , 1)
         tree.SetBranchStatus("genParts_vz"           , 1)
+        tree.SetBranchStatus("genParts_charge"       , 1)
         tree.SetBranchStatus("TTStubs_modId"         , 1)
-        tree.SetBranchStatus("AMTTRoads_nHitLayers"  , 1)
+        tree.SetBranchStatus("AMTTRoads_nSuperstrips", 1)
 
-        def fill(pt, eta, phi, vz, accept, trigger):
+        def fill(pt, eta, phi, vz, charge, accept, trigger):
             if accept:
-                if abs(eta) < 0.8:
-                    histos["pt_0"     + val].Fill(pt , trigger)
-                    histos["ppt_0"    + val].Fill(pt , trigger)
-                elif abs(eta) < 1.6:
-                    histos["pt_1"     + val].Fill(pt , trigger)
-                    histos["ppt_1"    + val].Fill(pt , trigger)
-                elif abs(eta) < 2.2:
-                    histos["pt_2"     + val].Fill(pt , trigger)
-                    histos["ppt_2"    + val].Fill(pt , trigger)
+                if abs(eta) < 2.2/3:
+                    histos["pt_0"     + val].Fill(pt      , trigger)
+                    histos["ppt_0"    + val].Fill(pt      , trigger)
+                elif abs(eta) < 4.4/3:
+                    histos["pt_1"     + val].Fill(pt      , trigger)
+                    histos["ppt_1"    + val].Fill(pt      , trigger)
+                elif abs(eta) < 6.6/3:
+                    histos["pt_2"     + val].Fill(pt      , trigger)
+                    histos["ppt_2"    + val].Fill(pt      , trigger)
 
                 if pt >= 20:
-                    histos["eta_0"    + val].Fill(eta, trigger)
-                    histos["phi_0"    + val].Fill(phi, trigger)
-                    histos["vz_0"     + val].Fill(vz , trigger)
+                    histos["eta_0"    + val].Fill(eta     , trigger)
+                    histos["phi_0"    + val].Fill(phi     , trigger)
+                    histos["vz_0"     + val].Fill(vz      , trigger)
+                    histos["charge_0" + val].Fill(charge  , trigger)
                     histos["etaphi_0" + val].Fill(eta, phi, trigger)
                 elif pt >= 5:
-                    histos["eta_1"    + val].Fill(eta, trigger)
-                    histos["phi_1"    + val].Fill(phi, trigger)
-                    histos["vz_1"     + val].Fill(vz , trigger)
+                    histos["eta_1"    + val].Fill(eta     , trigger)
+                    histos["phi_1"    + val].Fill(phi     , trigger)
+                    histos["vz_1"     + val].Fill(vz      , trigger)
+                    histos["charge_1" + val].Fill(charge  , trigger)
                     histos["etaphi_1" + val].Fill(eta, phi, trigger)
                 elif pt >= 2:
-                    histos["eta_2"    + val].Fill(eta, trigger)
-                    histos["phi_2"    + val].Fill(phi, trigger)
-                    histos["vz_2"     + val].Fill(vz , trigger)
+                    histos["eta_2"    + val].Fill(eta     , trigger)
+                    histos["phi_2"    + val].Fill(phi     , trigger)
+                    histos["vz_2"     + val].Fill(vz      , trigger)
+                    histos["charge_2" + val].Fill(charge  , trigger)
                     histos["etaphi_2" + val].Fill(eta, phi, trigger)
 
-            if abs(eta) < 0.8:
-                histos["ac_pt_0"     + val].Fill(pt , trigger)
-                histos["ac_ppt_0"    + val].Fill(pt , trigger)
-            elif abs(eta) < 1.6:
-                histos["ac_pt_1"     + val].Fill(pt , trigger)
-                histos["ac_ppt_1"    + val].Fill(pt , trigger)
-            elif abs(eta) < 2.2:
-                histos["ac_pt_2"     + val].Fill(pt , trigger)
-                histos["ac_ppt_2"    + val].Fill(pt , trigger)
+            if abs(eta) < 2.2/3:
+                histos["ac_pt_0"     + val].Fill(pt     , trigger)
+                histos["ac_ppt_0"    + val].Fill(pt     , trigger)
+            elif abs(eta) < 4.4/3:
+                histos["ac_pt_1"     + val].Fill(pt     , trigger)
+                histos["ac_ppt_1"    + val].Fill(pt     , trigger)
+            elif abs(eta) < 6.6/3:
+                histos["ac_pt_2"     + val].Fill(pt     , trigger)
+                histos["ac_ppt_2"    + val].Fill(pt     , trigger)
 
             if pt >= 20:
-                histos["ac_eta_0"    + val].Fill(eta, trigger)
-                histos["ac_phi_0"    + val].Fill(phi, trigger)
-                histos["ac_vz_0"     + val].Fill(vz , trigger)
+                histos["ac_eta_0"    + val].Fill(eta     , trigger)
+                histos["ac_phi_0"    + val].Fill(phi     , trigger)
+                histos["ac_vz_0"     + val].Fill(vz      , trigger)
+                histos["ac_charge_0" + val].Fill(charge  , trigger)
                 histos["ac_etaphi_0" + val].Fill(eta, phi, trigger)
             elif pt >= 5:
-                histos["ac_eta_1"    + val].Fill(eta, trigger)
-                histos["ac_phi_1"    + val].Fill(phi, trigger)
-                histos["ac_vz_1"     + val].Fill(vz , trigger)
+                histos["ac_eta_1"    + val].Fill(eta     , trigger)
+                histos["ac_phi_1"    + val].Fill(phi     , trigger)
+                histos["ac_vz_1"     + val].Fill(vz      , trigger)
+                histos["ac_charge_1" + val].Fill(charge  , trigger)
                 histos["ac_etaphi_1" + val].Fill(eta, phi, trigger)
             elif pt >= 2:
-                histos["ac_eta_2"    + val].Fill(eta, trigger)
-                histos["ac_phi_2"    + val].Fill(phi, trigger)
-                histos["ac_vz_2"     + val].Fill(vz , trigger)
+                histos["ac_eta_2"    + val].Fill(eta     , trigger)
+                histos["ac_phi_2"    + val].Fill(phi     , trigger)
+                histos["ac_vz_2"     + val].Fill(vz      , trigger)
+                histos["ac_charge_2" + val].Fill(charge  , trigger)
                 histos["ac_etaphi_2" + val].Fill(eta, phi, trigger)
 
         # Merged layers
@@ -230,18 +242,23 @@ if sections["coverage"]:
         for i_ievt, ievt in enumerate(tree):
             if (i_ievt == nentries):  break
 
-            # Get track pt, eta, phi, vz
-            thePt, theEta, thePhi, theVz = ievt.genParts_pt[0], ievt.genParts_eta[0], ievt.genParts_phi[0], ievt.genParts_vz[0]
+            # Get track pt, eta, phi, vz, charge
+            thePt, theEta, thePhi, theVz, theCharge = ievt.genParts_pt[0], ievt.genParts_eta[0], ievt.genParts_phi[0], ievt.genParts_vz[0], ievt.genParts_charge[0]
+
+            if samples["tt27"]:
+                if not (0 < theEta < 2.2/3 and pi/4 < thePhi < pi/2):
+                    continue
 
             # Get trigger results
-            trigger = (ievt.AMTTRoads_nHitLayers.size() > 0)
+            trigger = (ievt.AMTTRoads_nSuperstrips.size() > 0)
 
             # Loop over stub moduleIds
             moduleIds_by_mlayers = [[], [], [], [], [], []]  # 6 mlayers
             for moduleId in ievt.TTStubs_modId:
                 lay = decodeLayer(moduleId)
                 mlay = layermap[lay]
-                moduleIds_by_mlayers[mlay].append(moduleId)
+                if moduleId in ttrmap:
+                    moduleIds_by_mlayers[mlay].append(moduleId)
 
             # At least one stub in every mlayer
             accept = True
@@ -257,6 +274,9 @@ if sections["coverage"]:
                     count_by_tt = {}
                     for moduleId in combination:
                         for tt in ttrmap[moduleId]:
+                            if samples["tt27"]:
+                                if not (tt == 27):
+                                    continue
                             # Idiom for incrementing
                             # See: http://www.gis.sdsu.edu/~gawron/compling/course_core/assignments/dictionary_discussion.htm
                             count_by_tt[tt] = count_by_tt.get(tt, 0) + 1
@@ -267,13 +287,19 @@ if sections["coverage"]:
                     if accept:
                         break
 
-            fill(thePt, theEta, thePhi, theVz, accept, trigger)
+            # Debug
+            #print i_ievt
+            #print "..", thePt, theEta, thePhi, theVz, theCharge, accept, trigger
+            #for moduleId in ievt.TTStubs_modId:
+            #    print "....", moduleId, ttrmap[moduleId]
+
+            fill(thePt, theEta, thePhi, theVz, theCharge, accept, trigger)
 
         tree.SetBranchStatus("*", 1)
         return
 
     def drawCoverage(histos, setting, banksize, hnlambda, imgdir):
-        for hvar in ["pt", "ppt", "eta", "phi", "vz"]:
+        for hvar in ["pt", "ppt", "eta", "phi", "vz", "charge"]:
             ymax = 1.2
 
             hname = "%s_%i" % (hvar,0)
@@ -304,13 +330,13 @@ if sections["coverage"]:
             if samples["tt27"]:
                 if hvar == "eta":
                     tboxes = [
-                        TBox( xmin, 0,  -0.2, ymax),
-                        TBox(  0.8, 0,  xmax, ymax),
+                        TBox( xmin, 0,     0, ymax),
+                        TBox(2.2/3, 0,  xmax, ymax),
                     ]
                 elif hvar == "phi":
                     tboxes = [
-                        TBox( xmin, 0,   0.6, ymax),
-                        TBox(  1.7, 0,  xmax, ymax),
+                        TBox( xmin, 0,  pi/4, ymax),
+                        TBox( pi/2, 0,  xmax, ymax),
                     ]
             for box in tboxes:
                 box.SetFillStyle(3004); box.SetFillColor(kGray)
@@ -320,9 +346,9 @@ if sections["coverage"]:
             moveLegend(0.48,0.22,0.94,0.34); legend.Clear()
             if hvar == "pt" or hvar == "ppt":
                 writeme = [
-                    "0.0 #leq |#eta| < 0.8",
-                    "0.8 #leq |#eta| < 1.6",
-                    "1.6 #leq |#eta| < 2.2",
+                    "0.00 #leq |#eta| < 0.73",
+                    "0.73 #leq |#eta| < 1.47",
+                    "1.47 #leq |#eta| < 2.20",
                 ]
             else:
                 writeme = [
@@ -357,19 +383,19 @@ if sections["coverage"]:
 
 
     # __________________________________________________________________________
-    for sett, sett1 in settings[:]:
+    for ss, npatterns, coverage in settings:
         chain.Reset()
 
-        result = (RES % sett) + ("_%s" % DATE)
-        infiles = listdir_fullpath(EOS+"/"+result)
-        print sett, len(infiles)
+        result = (RES % ss) + ("_%s" % DATE)
+        infiles = listdir_fullpath(EOS + "/" + result)
+        print ss, len(infiles)
         for f in infiles:
             chain.Add(f)
 
         histos = bookCoverage()
         projectCoverage(chain, histos, nentries=nentries)
-        setting = sett.replace("_", " ")
-        banksize = 1e-6*sett1
+        setting = ss.replace("_", " ")
+        banksize = 1e-6*npatterns
         drawCoverage(histos, setting, banksize, lambda x: x, imgdir)
         drawCoverage(histos, setting, banksize, lambda x: "ac_"+x, imgdir)
         histos.clear()
@@ -413,7 +439,7 @@ if sections["roads"]:
 
     def projectRoads(tree, histos, nentries=1000000000):
         tree.SetBranchStatus("*", 0)
-        tree.SetBranchStatus("AMTTRoads_nHitLayers"      , 1)
+        tree.SetBranchStatus("AMTTRoads_nSuperstrips"    , 1)
         tree.SetBranchStatus("AMTTRoads_hitSuperstripIds", 1)
 
         # Loop over events
@@ -423,24 +449,21 @@ if sections["roads"]:
             nroads_per_event = 0
             ncombinations_per_event = 0
 
-            for nHitLayers, superstripIds in izip(ievt.AMTTRoads_nHitLayers, ievt.AMTTRoads_hitSuperstripIds):
-                ssmap = {}
-                for ss in superstripIds:
-                    if ss not in ssmap:
-                        ssmap[ss] = 1
-                    else:
-                        ssmap[ss] += 1
+            for nSuperstrips, superstripIds in izip(ievt.AMTTRoads_nSuperstrips, ievt.AMTTRoads_hitSuperstripIds):
+                ssidmap = {}
+                for ssid in superstripIds:
+                    ssidmap[ssid] = ssidmap.get(ssid, 0) + 1
 
-                nsuperstrips_per_road = len(ssmap)
+                nsuperstrips_per_road = len(ssidmap)
                 nroads_per_event += 1
 
-                assert(nsuperstrips_per_road == nHitLayers)
+                assert(nsuperstrips_per_road == nSuperstrips)
                 histos["nsuperstrips_per_road"].Fill(nsuperstrips_per_road)
 
                 nstubs_per_road = 0
-                ncombinations_per_road = 1.
+                ncombinations_per_road = 1
 
-                for k, v in ssmap.iteritems():
+                for k, v in ssidmap.iteritems():
                     nstubs_per_superstrip = v
                     nstubs_per_road += v
                     ncombinations_per_road *= v
@@ -453,7 +476,7 @@ if sections["roads"]:
                 histos["nstubs_per_road"].Fill(nstubs_per_road)
                 histos["ncombinations_per_road"].Fill(ncombinations_per_road)
 
-            assert(nroads_per_event == ievt.AMTTRoads_nHitLayers.size())
+            assert(nroads_per_event == ievt.AMTTRoads_nSuperstrips.size())
             histos["nroads_per_event"].Fill(nroads_per_event)
             histos["ncombinations_per_event"].Fill(ncombinations_per_event)
 
@@ -468,18 +491,18 @@ if sections["roads"]:
 
 
     # __________________________________________________________________________
-    for sett, sett1 in settings[:]:
+    for ss, npatterns, coverage in settings:
         chain.Reset()
 
-        result = (RES % sett) + ("_%s" % DATE)
-        infiles = listdir_fullpath(EOS+"/"+result)
-        print sett, len(infiles)
+        result = (RES % ss) + ("_%s" % DATE)
+        infiles = listdir_fullpath(EOS + "/" + result)
+        print ss, len(infiles)
         for f in infiles:
             chain.Add(f)
 
         histos = bookRoads()
         projectRoads(chain, histos, nentries=nentries/1000)
-        setting = sett.replace("_", " ")
-        banksize = 1e-6*sett1
+        setting = ss.replace("_", " ")
+        banksize = 1e-6*npatterns
         drawRoads(histos, setting, banksize, imgdir, logy=True)
         histos.clear()

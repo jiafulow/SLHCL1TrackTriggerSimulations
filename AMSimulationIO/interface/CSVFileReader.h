@@ -19,7 +19,7 @@ class CSVFileReader {
     int getModuleCoordinateMap(TString src,
                                std::map<unsigned, ModuleCoordinate>& coordmap);
 
-  private:
+  protected:
     const int verbose_;
 };
 

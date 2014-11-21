@@ -154,16 +154,25 @@ std::vector<unsigned> SuperstripStitcher::stitch_layermap(const std::vector<unsi
     // Case 2
     ret.resize(nLayers_, 999999);
 
+    //unsigned lay, mlay;
+    //for (unsigned i=0; i<layers.size(); ++i) {
+    //    lay = layers.at(i);
+    //    mlay = layermap_.at(lay);
+    //    if (ret.at(mlay) == 999999) {
+    //        ret.at(mlay) = i;
+    //    } else {
+    //        if (randNumber_(randEngine_) & 1)  // is odd
+    //            ret.at(mlay) = i;
+    //    }
+    //}
+
+    std::vector<unsigned> sortedLayers = layers;
+    std::sort(sortedLayers.begin(), sortedLayers.end());
     unsigned lay, mlay;
-    for (unsigned i=0; i<layers.size(); ++i) {
-        lay = layers.at(i);
+    for (unsigned i=0; i<sortedLayers.size(); ++i) {
+        lay = sortedLayers.at(i);
         mlay = layermap_.at(lay);
-        if (ret.at(mlay) == 999999) {
-            ret.at(mlay) = i;
-        } else {
-            if (randNumber_(randEngine_) & 1)  // is odd
-                ret.at(mlay) = i;
-        }
+        ret.at(mlay) = i;  // always prefer endcap, as sortedLayers is used
     }
 
     // Case 2.1

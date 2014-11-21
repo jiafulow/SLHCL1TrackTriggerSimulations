@@ -2,6 +2,7 @@
 
 from rootdrawing import *
 from roothelper import *
+from array import array
 from math import pi
 
 # ______________________________________________________________________________
@@ -14,10 +15,11 @@ samples["minbias"      ] = False
 samples["minbias_remix"] = False
 
 sections = {}
-sections["minbias_single"       ] = False
-sections["rate_by_module"       ] = True
+sections["minbias"              ] = False
+sections["rate_by_module"       ] = False
 sections["rate_by_superstrip"   ] = False
-sections["ntracks_by_tower"     ] = False
+sections["ntracks_by_tower"     ] = True
+sections["nstubs_by_tower"      ] = False
 sections["nstubs_by_layer"      ] = False
 sections["nmodules_by_layer"    ] = False
 sections["nsuperstrips_by_layer"] = False
@@ -39,9 +41,9 @@ imgdir = "figures_pileup/"
 # Neutrino gun (140PU)
 if samples["nu140"]:
     #infiles = ["/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_ntuple/Neutrino_Pt2to20_gun_20140821/ntuple_1_1_9cK.root", "/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_ntuple/Neutrino_Pt2to20_gun_20140821/ntuple_2_1_HJw.root"]
-    #infiles = ["/uscms_data/d2/jiafu/L1TrackTrigger/CMSSW_6_2_0_SLHC12_patch1/src/SLHCL1TrackTriggerSimulations/Configuration/test/PU140/Neutrino_E2023TTI_PU140_ntuple.1.root"]
-    infiles = ["/uscms_data/d2/jiafu/L1TrackTrigger/CMSSW_6_2_0_SLHC12_patch1/src/SLHCL1TrackTriggerSimulations/Configuration/test/PU140/Neutrino_E2023TTI_PU140_TuneZ2star_ntuple.1.root"]
-    #infiles = ["/uscms_data/d2/jiafu/L1TrackTrigger/CMSSW_6_2_0_SLHC12_patch1/src/SLHCL1TrackTriggerSimulations/Configuration/test/PU140/Neutrino_E2023TTI_PU140_TuneCUEP6S1_ntuple.1.root"]
+    #infiles = ["/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_ntuple/PU140/Neutrino_E2023TTI_PU140_ntuple.1.root"]
+    #infiles = ["/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_ntuple/PU140/Neutrino_E2023TTI_PU140_TuneZ2star_ntuple.1.root"]
+    infiles = ["/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_ntuple/PU140/Neutrino_E2023TTI_PU140_TuneCUEP6S1_ntuple.1.root"]
     col  = TColor.GetColor("#e31a1c")  # Paired
     fcol = TColor.GetColor("#fb9a99")
     imgdir = "figures_pileup_nu140/"
@@ -91,9 +93,94 @@ pb = EtaBinning("#phi", 64, -3.2, 3.2)
 
 
 # ______________________________________________________________________________
-if sections["minbias_single"]:
+if sections["minbias"]:
 
-    pass
+    towers = ["tt27", "tt35", "tt43", "ttavg"]
+
+    def bookTower():
+        histos1, histos2 = {}, {}
+        for tower in towers:
+            histos1[tower] = TH1F(tower+"_1", "; trkPart p_{T} [GeV]; Entries", 50, 0, 10)
+            histos2[tower] = TH1F(tower+"_2", "; trkPart p_{T} [GeV]; Entries", 50, 0, 10)
+        for k, v in histos1.iteritems():
+            v.SetLineColor(kBlack); v.SetLineWidth(2); v.SetFillStyle(0)
+        for k, v in histos2.iteritems():
+            v.SetLineColor(col); v.SetLineWidth(2); v.SetFillStyle(0)
+        return (histos1, histos2)
+
+    def projectTower(tree1, tree2, histos1, histos2):
+        for tree, histos in zip([tree1, tree2], [histos1, histos2]):
+            tree.SetBranchStatus("*", 0)
+            tree.SetBranchStatus("trkParts_pt"     , 1)
+            tree.SetBranchStatus("trkParts_eta"    , 1)
+            tree.SetBranchStatus("trkParts_phi"    , 1)
+            tree.SetBranchStatus("trkParts_primary", 1)
+
+            # Loop over events
+            for i_ievt, ievt in enumerate(tree):
+                if (i_ievt == nentries):  break
+
+                # Loop over trkParts
+                # Count tracks in a trigger tower above a pt threshold
+                counts = {}
+                for pt, eta, phi, primary in izip(ievt.trkParts_pt, ievt.trkParts_eta, ievt.trkParts_phi, ievt.trkParts_primary):
+                    tower = ""
+                    if primary:
+                        if -2.2 <= eta <= 2.2:
+                            tower = "ttavg"
+
+                    if tower:
+                        histos[tower].Fill(pt, 1.0/48)
+
+                    tower = ""
+                    if primary and (pi/4. <= phi <= pi/2.):
+                        if 2.2/3*0 <= eta <= 2.2/3*1:
+                            tower = "tt27"
+                        elif 2.2/3*1 <= eta <= 2.2/3*2:
+                            tower = "tt35"
+                        elif 2.2/3*2 <= eta <= 2.2/3*3:
+                            tower = "tt43"
+
+                    if tower:
+                        histos[tower].Fill(pt)
+
+            tree.SetBranchStatus("*", 0)
+        return
+
+
+    def drawTower(histos1, histos2, captions, imgdir):
+        ymax = max([h1.GetMaximum() for h1 in histos1.values()])
+
+        for tower in towers:
+            h1 = histos1[tower]
+            h2 = histos2[tower]
+
+            h1.SetStats(0); h1.SetMaximum(ymax * 7); h1.SetMinimum(0.5)
+            h1.Draw("hist")
+            h2.Draw("same hist")
+            gPad.SetLogy(1)
+
+            moveLegend(0.56,0.78,0.94,0.94); legend.Clear()
+            legend.AddEntry(h1, "%s %s" % (tower, captions[0]), "l")
+            legend.AddEntry(h2, "%s %s" % (tower, captions[1]), "l")
+            legend.Draw()
+            CMS_label()
+            save(imgdir, "minbias_pt_%s" % tower)
+            gPad.SetLogy(0)
+
+        donotdelete = []
+        return donotdelete
+
+
+    tree1 = TChain("ntupler/tree")
+    tree2 = TChain("ntupler/tree")
+    tree1.Add("/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_ntuple/PU140/Neutrino_E2023TTI_PU140_TuneZ2star_ntuple.1.root")
+    tree2.Add("/eos/uscms/store/user/l1upgrades/SLHC/GEN/620_SLHC12p1_ntuple/PU140/Neutrino_E2023TTI_PU140_TuneCUEP6S1_ntuple.1.root")
+
+    histos1, histos2 = bookTower()
+    projectTower(tree1, tree2, histos1, histos2)
+    d = drawTower(histos1, histos2, ["TuneZ2star", "TuneCUEP6S1"], imgdir)
+
 
 # ______________________________________________________________________________
 if sections["rate_by_module"]:
@@ -538,9 +625,331 @@ if sections["rate_by_superstrip"]:
 # ______________________________________________________________________________
 if sections["ntracks_by_tower"]:
 
-    #TODO: implement this
-    def bookTrack():
-        pass
+    gStyle.SetTitleSize(0.05, "Y")
+
+    cuts = ["pt0p2", "pt0p5", "pt1", "pt2", "pt3", "pt5", "pt10", "pt20"]
+    towers = ["tt27", "tt35", "tt43", "ttavg"]
+    cutlambda = lambda x: x[2:].replace("p",".")
+
+    def bookTower():
+        histos = {}
+        for cut in cuts:
+            for tower in towers:
+                hname = "%s_%s" % (tower,cut)
+                ytitle = "# trkParts/tower_{pt>%s,%s}" % (cutlambda(cut), tower)
+                histos[hname] = TH1F(hname, "; %s" % ytitle, 1000, 0, 100)
+        for k, v in histos.iteritems():
+            v.SetLineColor(col); v.SetFillColor(fcol)
+        return (histos)
+
+    def projectTower(tree, histos, nentries=1000000000, sim=True):
+        tree.SetBranchStatus("*", 0)
+        tree.SetBranchStatus("trkParts_pt"     , 1)
+        tree.SetBranchStatus("trkParts_eta"    , 1)
+        tree.SetBranchStatus("trkParts_phi"    , 1)
+        tree.SetBranchStatus("trkParts_primary", 1)
+
+        # Loop over events
+        for i_ievt, ievt in enumerate(tree):
+            if (i_ievt == nentries):  break
+
+            # Loop over trkParts
+            # Count tracks in a trigger tower above a pt threshold
+            counts = {}
+            for pt, eta, phi, primary in izip(ievt.trkParts_pt, ievt.trkParts_eta, ievt.trkParts_phi, ievt.trkParts_primary):
+                tower = ""
+                if primary:
+                    if -2.2 <= eta <= 2.2:
+                        tower = "ttavg"
+
+                if tower:
+                    for cut in cuts:
+                        ptcut = float(cutlambda(cut))
+                        if pt > ptcut:
+                            counts["%s_%s" % (tower,cut)] = counts.get("%s_%s" % (tower,cut), 0) + 1
+
+                tower = ""
+                if primary and (pi/4. <= phi <= pi/2.):
+                    if 2.2/3*0 <= eta <= 2.2/3*1:
+                        tower = "tt27"
+                    elif 2.2/3*1 <= eta <= 2.2/3*2:
+                        tower = "tt35"
+                    elif 2.2/3*2 <= eta <= 2.2/3*3:
+                        tower = "tt43"
+
+                if tower:
+                    for cut in cuts:
+                        ptcut = float(cutlambda(cut))
+                        if pt > ptcut:
+                            counts["%s_%s" % (tower,cut)] = counts.get("%s_%s" % (tower,cut), 0) + 1
+
+            for k, v in histos.iteritems():
+                if k in counts:
+                    if "ttavg" in k:
+                        v.Fill(counts[k]/48.)
+                    else:
+                        v.Fill(counts[k])
+                else:
+                    v.Fill(0)
+        tree.SetBranchStatus("*", 0)
+        return
+
+    def drawTower(histos, ymax, imgdir):
+        in_quantiles = array('d', [0.0015, 0.025, 0.16, 0.5, 0.84, 0.975, 0.9985])
+        quantiles = array('d', [0., 0., 0., 0., 0., 0., 0.])
+
+        donotdelete = []
+        for cut in cuts:
+            n = len(towers)
+            xvalues         = array('d', [0.5+i for i in xrange(n)])
+            xvalues_sigma   = array('d', [0.5 for i in xrange(n)])
+            yvalues_mean    = array('d', [0. for i in xrange(n)])
+            yvalues_p3sigma = array('d', [0. for i in xrange(n)])
+            yvalues_p2sigma = array('d', [0. for i in xrange(n)])
+            yvalues_p1sigma = array('d', [0. for i in xrange(n)])
+            yvalues_median  = array('d', [0. for i in xrange(n)])
+            yvalues_m1sigma = array('d', [0. for i in xrange(n)])
+            yvalues_m2sigma = array('d', [0. for i in xrange(n)])
+            yvalues_m3sigma = array('d', [0. for i in xrange(n)])
+
+            for i, tower in enumerate(towers):
+                hname = "%s_%s" % (tower,cut)
+                h = histos[hname]
+                h.GetQuantiles(len(quantiles), quantiles, in_quantiles)
+                print hname, h.GetMean(), quantiles
+
+                yvalues_mean[i]    = h.GetMean()
+                yvalues_m3sigma[i] = quantiles[3] - quantiles[0]
+                yvalues_m2sigma[i] = quantiles[3] - quantiles[1]
+                yvalues_m1sigma[i] = quantiles[3] - quantiles[2]
+                yvalues_median[i]  = quantiles[3]
+                yvalues_p1sigma[i] = quantiles[4] - quantiles[3]
+                yvalues_p2sigma[i] = quantiles[5] - quantiles[3]
+                yvalues_p3sigma[i] = quantiles[6] - quantiles[3]
+
+                h.Draw("hist")
+                CMS_label()
+                save(imgdir, "ntracks_by_tower_%s" % hname)
+
+            ytitle = "# trkParts/tower_{pt>%s}" % (cutlambda(cut))
+            hframe = TH1F("hframe_%s" % cut, "; Tower; %s" % ytitle, n, 0, n)
+            h_mean = TH1F("h_mean_%s" % cut, "; Tower; %s" % ytitle, n, 0, n)
+            h_median = TH1F("h_median_%s" % cut, "; Tower; %s" % ytitle, n, 0, n)
+            for i in xrange(n):
+                hframe.GetXaxis().SetBinLabel(i+1, towers[i])
+                h_mean.SetBinContent(i+1, yvalues_mean[i])
+                h_median.SetBinContent(i+1, yvalues_median[i])
+            out_histos = [hframe, h_mean, h_median]
+
+            gr_1sigma = TGraphAsymmErrors(n, xvalues, yvalues_median, xvalues_sigma, xvalues_sigma, yvalues_m1sigma, yvalues_p1sigma)
+            gr_2sigma = TGraphAsymmErrors(n, xvalues, yvalues_median, xvalues_sigma, xvalues_sigma, yvalues_m2sigma, yvalues_p2sigma)
+            gr_3sigma = TGraphAsymmErrors(n, xvalues, yvalues_median, xvalues_sigma, xvalues_sigma, yvalues_m3sigma, yvalues_p3sigma)
+            out_graphs = [gr_1sigma, gr_2sigma, gr_3sigma]
+
+            # Style
+            for h in out_histos:
+                h.SetLineWidth(2)
+            h_mean.SetMarkerStyle(20); h_mean.SetMarkerSize(1.1)
+            h_median.SetLineColor(kRed)
+
+            gr_1sigma.SetFillColor(kGreen)
+            gr_2sigma.SetFillColor(kYellow)
+            gr_3sigma.SetFillColor(kOrange)
+
+            ymax = (max(yvalues_median) + max(yvalues_p3sigma)) * 1.6
+            hframe.SetStats(0); hframe.SetMaximum(ymax)
+            hframe.Draw()
+            gr_3sigma.Draw("2")
+            gr_2sigma.Draw("2")
+            gr_1sigma.Draw("2")
+            h_median.Draw("same hist")
+            h_mean.Draw("same p")
+
+            moveLegend(0.56,0.70,0.94,0.94); legend.Clear()
+            legend.AddEntry(h_mean, "mean", "p")
+            legend.AddEntry(h_median, "median", "l")
+            legend.AddEntry(gr_1sigma, "#pm1 #sigma", "f")
+            legend.AddEntry(gr_2sigma, "#pm2 #sigma", "f")
+            legend.AddEntry(gr_3sigma, "#pm3 #sigma", "f")
+            legend.Draw()
+            CMS_label()
+            save(imgdir, "ntracks_by_tower_quantile_%s" % cut)
+
+            donotdelete += out_histos
+            donotdelete += out_graphs
+        return donotdelete
+
+    histos = bookTower()
+    projectTower(tree, histos, nentries=nentries)
+    d = drawTower(histos, 100, imgdir)
+
+
+# ______________________________________________________________________________
+if sections["nstubs_by_tower"]:
+
+    gStyle.SetTitleSize(0.05, "Y")
+
+    cuts = ["a0", "b5", "b6", "b7", "b8", "b9", "b10", "e11", "e12", "e13", "e14", "e15", "e18", "e19", "e20", "e21", "e22"]
+    towers = ["tt27", "tt35", "tt43", "ttavg"]
+    cutlambda = lambda x: x[1:]
+
+    def bookTower():
+        histos = {}
+        for cut in cuts:
+            for tower in towers:
+                hname = "%s_%s" % (tower,cut)
+                if cut[0] == "a":
+                    ytitle = "# stubs/tower_{all layers,%s}" % (tower)
+                elif cut[0] == "b":
+                    ytitle = "# stubs/layer/tower_{barrel layer %s,%s}" % (cutlambda(cut), tower)
+                elif cut[0] == "e":
+                    ytitle = "# stubs/layer/tower_{endcap layer %s,%s}" % (cutlambda(cut), tower)
+                histos[hname] = TH1F(hname, "; %s" % ytitle, 1000, 0, 1000)
+        for k, v in histos.iteritems():
+            v.SetLineColor(col); v.SetFillColor(fcol)
+        return (histos)
+
+    def projectTower(tree, histos, nentries=1000000000, sim=True):
+        tree.SetBranchStatus("*", 0)
+        tree.SetBranchStatus("TTStubs_modId"         , 1)
+        #tree.SetBranchStatus("TTStubs_eta"           , 1)
+        #tree.SetBranchStatus("TTStubs_phi"           , 1)
+
+        # Loop over events
+        for i_ievt, ievt in enumerate(tree):
+            if (i_ievt == nentries):  break
+
+            # Loop over stubs
+            # Count stubs in a trigger tower for each layer
+            counts = {}
+            for moduleId in ievt.TTStubs_modId:
+                lay = decodeLayer(moduleId)
+
+                if moduleId in ttrmap:
+                    tower = "ttavg"
+                    cut = "a0"
+                    counts["%s_%s" % (tower,cut)] = counts.get("%s_%s" % (tower,cut), 0) + 1
+                    if lay < 11:
+                        cut = "b%i" % lay
+                    else:
+                        cut = "e%i" % lay
+                    counts["%s_%s" % (tower,cut)] = counts.get("%s_%s" % (tower,cut), 0) + 1
+
+                    for tt in ttrmap[moduleId]:
+                        if tt in [27,35,43]:
+                            tower = "tt%i" % tt
+                            cut = "a0"
+                            counts["%s_%s" % (tower,cut)] = counts.get("%s_%s" % (tower,cut), 0) + 1
+                            if lay < 11:
+                                cut = "b%i" % lay
+                            else:
+                                cut = "e%i" % lay
+                            counts["%s_%s" % (tower,cut)] = counts.get("%s_%s" % (tower,cut), 0) + 1
+
+            for k, v in histos.iteritems():
+                if k in counts:
+                    if "ttavg" in k:
+                        v.Fill(counts[k]/48.)
+                    else:
+                        v.Fill(counts[k])
+                else:
+                    v.Fill(0)
+        tree.SetBranchStatus("*", 0)
+        return
+
+    def drawTower(histos, ymax, imgdir):
+        in_quantiles = array('d', [0.0015, 0.025, 0.16, 0.5, 0.84, 0.975, 0.9985])
+        quantiles = array('d', [0., 0., 0., 0., 0., 0., 0.])
+
+        donotdelete = []
+        for cut in cuts:
+            n = len(towers)
+            xvalues         = array('d', [0.5+i for i in xrange(n)])
+            xvalues_sigma   = array('d', [0.5 for i in xrange(n)])
+            yvalues_mean    = array('d', [0. for i in xrange(n)])
+            yvalues_p3sigma = array('d', [0. for i in xrange(n)])
+            yvalues_p2sigma = array('d', [0. for i in xrange(n)])
+            yvalues_p1sigma = array('d', [0. for i in xrange(n)])
+            yvalues_median  = array('d', [0. for i in xrange(n)])
+            yvalues_m1sigma = array('d', [0. for i in xrange(n)])
+            yvalues_m2sigma = array('d', [0. for i in xrange(n)])
+            yvalues_m3sigma = array('d', [0. for i in xrange(n)])
+
+            for i, tower in enumerate(towers):
+                hname = "%s_%s" % (tower,cut)
+                h = histos[hname]
+                h.GetQuantiles(len(quantiles), quantiles, in_quantiles)
+                print hname, h.GetMean(), quantiles
+
+                yvalues_mean[i]    = h.GetMean()
+                yvalues_m3sigma[i] = quantiles[3] - quantiles[0]
+                yvalues_m2sigma[i] = quantiles[3] - quantiles[1]
+                yvalues_m1sigma[i] = quantiles[3] - quantiles[2]
+                yvalues_median[i]  = quantiles[3]
+                yvalues_p1sigma[i] = quantiles[4] - quantiles[3]
+                yvalues_p2sigma[i] = quantiles[5] - quantiles[3]
+                yvalues_p3sigma[i] = quantiles[6] - quantiles[3]
+
+                h.Draw("hist")
+                CMS_label()
+                save(imgdir, "nstubs_by_tower_%s" % hname)
+
+            if cut[0] == "a":
+                ytitle = "# stubs/tower_{all layers}"
+            elif cut[0] == "b":
+                ytitle = "# stubs/layer/tower_{barrel layer %s}" % (cutlambda(cut))
+            elif cut[0] == "e":
+                ytitle = "# stubs/layer/tower_{endcap layer %s}" % (cutlambda(cut))
+            hframe = TH1F("hframe_%s" % cut, "; Tower; %s" % ytitle, n, 0, n)
+            h_mean = TH1F("h_mean_%s" % cut, "; Tower; %s" % ytitle, n, 0, n)
+            h_median = TH1F("h_median_%s" % cut, "; Tower; %s" % ytitle, n, 0, n)
+            for i in xrange(n):
+                hframe.GetXaxis().SetBinLabel(i+1, towers[i])
+                h_mean.SetBinContent(i+1, yvalues_mean[i])
+                h_median.SetBinContent(i+1, yvalues_median[i])
+            out_histos = [hframe, h_mean, h_median]
+
+            gr_1sigma = TGraphAsymmErrors(n, xvalues, yvalues_median, xvalues_sigma, xvalues_sigma, yvalues_m1sigma, yvalues_p1sigma)
+            gr_2sigma = TGraphAsymmErrors(n, xvalues, yvalues_median, xvalues_sigma, xvalues_sigma, yvalues_m2sigma, yvalues_p2sigma)
+            gr_3sigma = TGraphAsymmErrors(n, xvalues, yvalues_median, xvalues_sigma, xvalues_sigma, yvalues_m3sigma, yvalues_p3sigma)
+            out_graphs = [gr_1sigma, gr_2sigma, gr_3sigma]
+
+            # Style
+            for h in out_histos:
+                h.SetLineWidth(2)
+            h_mean.SetMarkerStyle(20); h_mean.SetMarkerSize(1.1)
+            h_median.SetLineColor(kRed)
+
+            gr_1sigma.SetFillColor(kGreen)
+            gr_2sigma.SetFillColor(kYellow)
+            gr_3sigma.SetFillColor(kOrange)
+
+            ymax = (max(yvalues_median) + max(yvalues_p3sigma)) * 1.6
+            hframe.SetStats(0); hframe.SetMaximum(ymax)
+            hframe.Draw()
+            gr_3sigma.Draw("2")
+            gr_2sigma.Draw("2")
+            gr_1sigma.Draw("2")
+            h_median.Draw("same hist")
+            h_mean.Draw("same p")
+
+            moveLegend(0.56,0.70,0.94,0.94); legend.Clear()
+            legend.AddEntry(h_mean, "mean", "p")
+            legend.AddEntry(h_median, "median", "l")
+            legend.AddEntry(gr_1sigma, "#pm1 #sigma", "f")
+            legend.AddEntry(gr_2sigma, "#pm2 #sigma", "f")
+            legend.AddEntry(gr_3sigma, "#pm3 #sigma", "f")
+            legend.Draw()
+            CMS_label()
+            save(imgdir, "nstubs_by_tower_quantile_%s" % cut)
+
+            donotdelete += out_histos
+            donotdelete += out_graphs
+        return donotdelete
+
+    histos = bookTower()
+    projectTower(tree, histos, nentries=nentries)
+    d = drawTower(histos, 100, imgdir)
 
 
 # ______________________________________________________________________________

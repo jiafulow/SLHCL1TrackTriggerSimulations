@@ -102,7 +102,8 @@ int NTupleMaker::writeTree(TString out) {
     ResetDeleteBranches(ttree);
 
     // For merging
-    chain_roads_->SetBranchStatus("genParts_*", 0);
+    chain_roads_->SetBranchStatus("*", 0);
+    chain_roads_->SetBranchStatus("AMTTRoads_*", 1);
     TObjArray* branches_roads = chain_roads_->GetListOfBranches();
     for (int i=0; i<branches_roads->GetEntries(); ++i) {
         TBranch* branch = (TBranch*) branches_roads->At(i);
@@ -111,6 +112,9 @@ int NTupleMaker::writeTree(TString out) {
         connectors.back()->connect(chain_roads_);
     }
 
+    //chain_tracks_->SetBranchStatus("*", 0);
+    //chain_tracks_->SetBranchStatus("AMTTRoads_*", 1);
+    //chain_tracks_->SetBranchStatus("AMTTTracks_*", 1);
     //TObjArray* branches_tracks = chain_tracks_->GetListOfBranches();
     //for (int i=0; i<branches_tracks->GetEntries(); ++i) {
     //    TBranch* branch = (TBranch*) branches_tracks->At(i);

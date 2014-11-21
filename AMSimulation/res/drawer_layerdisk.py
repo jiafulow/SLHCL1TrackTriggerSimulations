@@ -8,7 +8,8 @@ from math import pi
 # Configurations
 
 sections = {}
-sections["layerdisk"            ] = True
+sections["layerdisk"            ] = False
+sections["triggertower"         ] = True
 sections["rate_by_module"       ] = False
 sections["rate_by_layer"        ] = False
 sections["rate_by_layer2"       ] = False
@@ -138,7 +139,6 @@ if sections["layerdisk"]:
             coordmap_eta.setdefault(lay, []).append(eta)
             coordmap_phi.setdefault(lay, []).append(phi)
 
-        histos = {}
         for l, ll in layers:
             p0 = struct2D("layerdisk_scatter_%s" % l, "dummy", "dummy",
                 "module "+eb.xtitle, eb.nbinsx * 8, eb.xlow, eb.xup, "module "+pb.xtitle, pb.nbinsx * 8, pb.xlow, pb.xup, kBlack, blkrgb[0])
@@ -188,7 +188,6 @@ if sections["layerdisk"]:
                 coordmap_eta.setdefault(tt, []).append(eta)
                 coordmap_phi.setdefault(tt, []).append(phi)
 
-        histos = {}
         for tt, ttt in towers:
             p0 = struct2D("layerdisk_scatter_%s" % tt, "dummy", "dummy",
                 "module "+eb.xtitle, eb.nbinsx * 8, eb.xlow, eb.xup, "module "+pb.xtitle, pb.nbinsx * 8, pb.xlow, pb.xup, kBlack, blkrgb[0])
@@ -227,11 +226,21 @@ if sections["layerdisk"]:
             "Tower", 3, 0, 3, "Layer", 11+1, 0, 11+1, kBlack, blkrgb[0])
         p1 = struct2D("layerdisk_nsuperstrips_sslg", "dummy", "dummy",
             "Tower", 3, 0, 3, "Layer", 11+1, 0, 11+1, kBlack, blkrgb[0])
-        histos = book2D([p0, p1])
+        p2 = struct2D("layerdisk_nsuperstrips_onlyphi_sssm", "dummy", "dummy",
+            "Tower", 3, 0, 3, "Layer", 11+1, 0, 11+1, kBlack, blkrgb[0])
+        p3 = struct2D("layerdisk_nsuperstrips_onlyphi_sslg", "dummy", "dummy",
+            "Tower", 3, 0, 3, "Layer", 11+1, 0, 11+1, kBlack, blkrgb[0])
+        histos = book2D([p0, p1, p2, p3])
+        histos[0].caption = "ss32"
+        histos[1].caption = "ss256"
+        histos[2].caption = "ss32 (no z segmentation)"
+        histos[3].caption = "ss256 (no z segmentation)"
 
         for tt, moduleIds in ttmap.iteritems():
-            if tt not in [27, 35, 42]:
+            if tt not in [27, 35, 43]:
                 continue
+
+            moduleLadders = []
             for moduleId in moduleIds:
                 s_tt = "tt" + str(tt)
                 lay = decodeLayer(moduleId)
@@ -239,7 +248,6 @@ if sections["layerdisk"]:
                     s_lay = "b" + str(lay)
                 else:
                     s_lay = "e" + str(lay)
-
                 if isPSModule(moduleId):
                     nsssms = (2 * 30)  # 30 = ceil(960./32)
                     nsslgs = (2 * 4)   #  4 = ceil(960./256)
@@ -247,14 +255,32 @@ if sections["layerdisk"]:
                     nsssms = (2 * 32)  # 32 = ceil(1016./32)
                     nsslgs = (2 * 4)   #  4 = ceil(1016./256)
 
+                lad = decodeLadder(moduleId)
+                moduleLadder = lay*10000 + lad*100 + 0
+                if isBarrelModule(moduleId):
+                    if moduleLadder not in moduleLadders:
+                        moduleLadders.append(moduleLadder)
+
                 histos[0].h.Fill(s_tt, "all layers", nsssms)
                 histos[1].h.Fill(s_tt, "all layers", nsslgs)
-
                 histos[0].h.Fill(s_tt, s_lay, nsssms)
                 histos[1].h.Fill(s_tt, s_lay, nsslgs)
 
-        histos[0].caption = "ss32"
-        histos[1].caption = "ss256"
+            for moduleId in moduleLadders:
+                s_tt = "tt" + str(tt)
+                lay = decodeLayer(moduleId)
+                if isBarrelModule(moduleId):
+                    s_lay = "b" + str(lay)
+                else:
+                    s_lay = "e" + str(lay)
+                nsssms = 32  # 32 = ceil(1016./32)
+                nsslgs = 4   #  4 = ceil(1016./256)
+
+                histos[2].h.Fill(s_tt, "all layers", nsssms)
+                histos[3].h.Fill(s_tt, "all layers", nsslgs)
+                histos[2].h.Fill(s_tt, s_lay, nsssms)
+                histos[3].h.Fill(s_tt, s_lay, nsslgs)
+
         for histo in histos:
             h = histo.h
             #h.LabelsDeflate("X"); h.LabelsDeflate("Y"); h.LabelsOption("a")
@@ -270,6 +296,127 @@ if sections["layerdisk"]:
             latex.DrawLatex(0.2, 0.84, "using %s" % histo.caption)
             CMS_label()
             save(imgdir, histo.name)
+
+
+if sections["triggertower"]:
+    from math import cos, sin, tan, atan, exp
+    gStyle.SetLabelSize(0.05, "Y")
+
+    latex2 = TLatex()
+    latex2.SetNDC(0)
+    latex2.SetTextFont(42)
+    latex2.SetTextSize(0.02)
+
+    line2 = TLine()
+    line2.SetLineColor(blkrgb[3])
+    line2.SetLineStyle(1)
+    line2.SetLineWidth(2)
+
+    if True:
+        for tt in [27]:
+            nbins, maxR, maxZ = 500, 150., 300.
+            p0 = struct2D("triggertower_scatter_PS_rhoz_tt%s" % tt, "dummy", "dummy",
+                "module z [cm]", nbins, -maxZ, maxZ, "module r [cm]", nbins, 0, maxR, kBlack, blkrgb[0])
+            p1 = struct2D("triggertower_scatter_PS_rhophi_tt%s" % tt, "dummy", "dummy",
+                "module x [cm]", nbins, -maxR, maxR, "module y [cm]", nbins, -maxR, maxR, kBlack, blkrgb[0])
+            p2 = struct2D("triggertower_scatter_2S_rhoz_tt%s" % tt, "dummy", "dummy",
+                "module z [cm]", nbins, -maxZ, maxZ, "module r [cm]", nbins, 0, maxR, kBlack, blkrgb[0])
+            p3 = struct2D("triggertower_scatter_2S_rhophi_tt%s" % tt, "dummy", "dummy",
+                "module x [cm]", nbins, -maxR, maxR, "module y [cm]", nbins, -maxR, maxR, kBlack, blkrgb[0])
+            histos = book2D([p0,p1,p2,p3])
+
+            coordmap = json.load(open("../data/module_coordinates.json"), object_pairs_hook=convert_key_to_int)
+            coordmap_x, coordmap_y, coordmap_z, coordmap_r, coordmap_eta, coordmap_phi = {}, {}, {}, {}, {}, {}
+            for k in ttmap[tt]:
+                lay = decodeLayer(k)
+                v = coordmap[k]
+                z, r, eta, phi = v[0:4]
+                coordmap_x.setdefault(lay, []).append(r*cos(phi))
+                coordmap_y.setdefault(lay, []).append(r*sin(phi))
+                coordmap_z.setdefault(lay, []).append(z)
+                coordmap_r.setdefault(lay, []).append(r)
+                coordmap_eta.setdefault(lay, []).append(eta)
+                coordmap_phi.setdefault(lay, []).append(phi)
+                if isPSModule(k):
+                    histos[0].h.Fill(z, r)
+                    histos[1].h.Fill(r*cos(phi), r*sin(phi))
+                else:
+                    histos[2].h.Fill(z, r)
+                    histos[3].h.Fill(r*cos(phi), r*sin(phi))
+
+            # rho-z
+            h = histos[0].h
+            h.SetMarkerStyle(20); h.SetMarkerSize(0.6); h.SetMarkerColor(blkrgb[1]); h.SetLineColor(kWhite)
+            h.SetStats(0); h.Draw()
+            h.GetXaxis().SetRangeUser(min(coordmap_z[10])-20, max(coordmap_z[10])+60)
+            h = histos[2].h
+            h.SetMarkerStyle(20); h.SetMarkerSize(0.6); h.SetMarkerColor(blkrgb[2]); h.SetLineColor(kWhite)
+
+            for eta in [x/10. for x in xrange(-2,11)]:
+                theta = 2 * atan(exp(-eta))
+                z = maxR / tan(theta)
+                line.DrawLine(0, 0, z, maxR)
+                z = (maxR-10) / tan(theta)
+                latex2.DrawLatex(z-5, maxR-10, "#eta=%.1f" % eta)
+
+            for eta in [0., 2.2/3]:
+                theta = 2 * atan(exp(-eta))
+                z = maxR / tan(theta)
+                line2.DrawLine(0, 0, z, maxR)
+                z = (maxR-20) / tan(theta)
+                latex2.DrawLatex(z-5, maxR-20, "#eta=%.1f" % eta)
+
+            histos[0].h.Draw("same")
+            histos[2].h.Draw("same")
+
+            moveLegend(0.66,0.16,0.94,0.42); legend.Clear()
+            for i in xrange(10,4,-1):
+                legend.AddEntry(h, "b%i #eta=[%.1f,%.1f]" % (i, min(coordmap_eta[i])-0.04, max(coordmap_eta[i])+0.05), "l")
+            legend.Draw()
+            CMS_label()
+            save(imgdir, p0.name)
+
+            # rho-phi
+            h = histos[1].h
+            h.SetMarkerStyle(20); h.SetMarkerSize(0.65); h.SetMarkerColor(blkrgb[1]); h.SetLineColor(kWhite)
+            h.SetStats(0); h.Draw()
+            minX = min(coordmap_x[5])-40
+            maxX = minX+maxR
+            h.GetXaxis().SetRangeUser(minX, maxX); h.GetYaxis().SetRangeUser(0, maxR); h.Draw()
+            h = histos[3].h
+            h.SetMarkerStyle(20); h.SetMarkerSize(0.6); h.SetMarkerColor(blkrgb[2]); h.SetLineColor(kWhite)
+
+            for phi in [x/10. for x in xrange(6,19)]:
+                if phi < 1.0:
+                    line.DrawLine(0, 0, maxX, maxX * tan(phi))
+                    latex2.DrawLatex(maxX-10, maxX * tan(phi)-5, "#phi=%.1f" % phi)
+                elif phi < pi/2:
+                    line.DrawLine(0, 0, maxR/tan(phi), maxR)
+                    latex2.DrawLatex(maxR/tan(phi)-2, maxR-10, "#phi=%.1f" % phi)
+                else:
+                    line.DrawLine(0, 0, maxR/tan(phi), maxR)
+                    latex2.DrawLatex(maxR/tan(phi)-2, maxR-10, "#phi=%.1f" % phi)
+
+            for phi in [pi/4, pi/2]:
+                if phi < 1.0:
+                    line2.DrawLine(0, 0, maxX, maxX * tan(phi))
+                    latex2.DrawLatex(maxX-20, maxX * tan(phi)-12, "#phi=#pi/%i" % int(pi/phi))
+                elif phi < pi/2:
+                    line2.DrawLine(0, 0, maxR/tan(phi), maxR)
+                    latex2.DrawLatex(maxR/tan(phi)-5, maxR-20, "#phi=#pi/%i" % int(pi/phi))
+                else:
+                    line2.DrawLine(0, 0, maxR/tan(phi), maxR)
+                    latex2.DrawLatex(maxR/tan(phi)-5, maxR-20, "#phi=#pi/%i" % int(pi/phi))
+
+            histos[1].h.Draw("same")
+            histos[3].h.Draw("same")
+
+            moveLegend(0.66,0.16,0.94,0.42); legend.Clear()
+            for i in xrange(10,4,-1):
+                legend.AddEntry(h, "b%i #phi=[%.1f,%.1f]" % (i, min(coordmap_phi[i])-0.04, max(coordmap_phi[i])+0.05), "l")
+            legend.Draw()
+            CMS_label()
+            save(imgdir, p1.name)
 
 
 # ______________________________________________________________________________

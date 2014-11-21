@@ -34,11 +34,6 @@ args=("${@:2}")
 if  ls input_*.txt > /dev/null 2>&1; then
     mv input_*.txt input.txt
 
-    # Take line 2i,2i+1 from input.txt (mu+,mu-)
-    #sed -i "$i"'q;d' input.txt
-    let "i2_0=2*$i-1"
-    let "i2_1=2*$i"
-    sed -i -n "$i2_0","$i2_1"p input.txt
 fi
 if  ls make_symlinks_*.sh > /dev/null 2>&1; then
     mv make_symlinks_*.sh make_symlinks.sh

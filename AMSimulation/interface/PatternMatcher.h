@@ -15,7 +15,7 @@ using namespace slhcl1tt;
 
 
 // SETTINGS: Majority logic
-// INPUT   : TTree with moduleId, hitId, sim info + pattern bank
+// INPUT   : TTree with moduleId, stub info, sim info + pattern bank
 // OUTPUT  : Roads
 
 class PatternMatcher {
@@ -24,7 +24,7 @@ class PatternMatcher {
     PatternMatcher(PatternBankOption option)
     : po(option), nLayers_(po.nLayers), nDCBits_(po.nDCBits),
       prefixRoad_("AMTTRoads_"), suffix_(""),
-      nEvents_(999999999), minFrequency_(1), maxPatterns_(999999999), maxRoads_(999999999), maxHits_(999999999),
+      nEvents_(999999999), minFrequency_(1), maxPatterns_(999999999), maxRoads_(999999999), maxStubs_(999999999),
       verbose_(1),
       inputPatterns_fas_(0,0) {
 
@@ -49,7 +49,7 @@ class PatternMatcher {
     void setMinFrequency(int n)     { minFrequency_ = n > 1 ? n : 1; }
     void setMaxPatterns(int n)      { if (n != -1)  maxPatterns_ = n > 0 ? n : 0; }
     void setMaxRoads(int n)         { if (n != -1)  maxRoads_    = n > 0 ? n : 0; }
-    void setMaxHits(int n)          { if (n != -1)  maxHits_     = n > 0 ? n : 0; }
+    void setMaxStubs(int n)         { if (n != -1)  maxStubs_    = n > 0 ? n : 0; }
     void setVerbosity(int v)        { verbose_ = v; }
 
     // Getters
@@ -75,7 +75,7 @@ class PatternMatcher {
     int minFrequency_;  // min frequency of patterns to be read out
     int maxPatterns_;   // max number of patterns
     int maxRoads_;      // max number of roads per event
-    int maxHits_;       // max number of hits per superstrip
+    int maxStubs_;      // max number of stubs per superstrip
     int verbose_;
 
     // Operators

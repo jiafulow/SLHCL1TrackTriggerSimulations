@@ -26,7 +26,7 @@ NTupleTrackingParticles::NTupleTrackingParticles(const edm::ParameterSet& iConfi
     produces<std::vector<int> >      (prefix_ + "ntkhits"   + suffix_);
     produces<std::vector<int> >      (prefix_ + "ntklayers" + suffix_);
     produces<std::vector<bool> >     (prefix_ + "signal"    + suffix_);
-    produces<std::vector<bool> >     (prefix_ + "stable"    + suffix_);
+    produces<std::vector<bool> >     (prefix_ + "intime"    + suffix_);
     produces<std::vector<bool> >     (prefix_ + "primary"   + suffix_);
     produces<std::vector<int> >      (prefix_ + "pdgId"     + suffix_);
     produces<std::vector<int> >      (prefix_ + "trkId"     + suffix_);
@@ -52,7 +52,7 @@ void NTupleTrackingParticles::produce(edm::Event& iEvent, const edm::EventSetup&
     std::auto_ptr<std::vector<int> >      v_ntkhits  (new std::vector<int>());
     std::auto_ptr<std::vector<int> >      v_ntklayers(new std::vector<int>());
     std::auto_ptr<std::vector<bool> >     v_signal   (new std::vector<bool>());
-    std::auto_ptr<std::vector<bool> >     v_stable   (new std::vector<bool>());
+    std::auto_ptr<std::vector<bool> >     v_intime   (new std::vector<bool>());
     std::auto_ptr<std::vector<bool> >     v_primary  (new std::vector<bool>());
     std::auto_ptr<std::vector<int> >      v_pdgId    (new std::vector<int>());
     std::auto_ptr<std::vector<int> >      v_trkId    (new std::vector<int>());
@@ -76,22 +76,25 @@ void NTupleTrackingParticles::produce(edm::Event& iEvent, const edm::EventSetup&
                 if (!selector_(*it))
                     continue;
 
-                // Signal: not out of time and not PU
-                bool signal = (it->eventId().bunchCrossing()== 0 && it->eventId().event() == 0);
+                // Signal event
+                bool signal = (it->eventId().event() == 0);
 
-                // Stable: from stable genParticle or from stable charged simTracks
-                bool stable = true;
-                if (it->genParticles().empty()) {
-                    //assert(it->status() == -99);
-                    const int absPdgId = abs(it->pdgId());
-                    if (absPdgId != 11 && absPdgId != 13 && absPdgId != 211 &&
-                        absPdgId != 321 && absPdgId != 2212 && absPdgId != 3112 &&
-                        absPdgId != 3222 && absPdgId != 3312 && absPdgId != 3334)
-                        stable = false;
-                } else {
-                    if (it->status() != 1)
-                        stable = false;
-                }
+                // In time bunch-crossing
+                bool intime = (it->eventId().bunchCrossing() == 0);
+
+                //// Stable: from stable genParticle or from stable charged simTracks
+                //bool stable = true;
+                //if (it->genParticles().empty()) {
+                //    //assert(it->status() == -99);
+                //    const int absPdgId = abs(it->pdgId());
+                //    if (absPdgId != 11 && absPdgId != 13 && absPdgId != 211 &&
+                //        absPdgId != 321 && absPdgId != 2212 && absPdgId != 3112 &&
+                //        absPdgId != 3222 && absPdgId != 3312 && absPdgId != 3334)
+                //        stable = false;
+                //} else {
+                //    if (it->status() != 1)
+                //        stable = false;
+                //}
 
                 // Primary: pT > 0.2 GeV, |d0| < 0.1 cm, |z0| < 25 cm
                 bool primary = (it->pt() > 0.2 && sqrt(it->vx() * it->vx() + it->vy() * it->vy()) < 0.1 && fabs(it->vz()) < 25.0);
@@ -111,7 +114,7 @@ void NTupleTrackingParticles::produce(edm::Event& iEvent, const edm::EventSetup&
                 v_ntkhits->push_back(it->numberOfTrackerHits());
                 v_ntklayers->push_back(it->numberOfTrackerLayers());
                 v_signal->push_back(signal);
-                v_stable->push_back(stable);
+                v_intime->push_back(intime);
                 v_primary->push_back(primary);
                 v_pdgId->push_back(it->pdgId());
                 int trkId = it->g4Tracks().empty() ? -99 : it->g4Tracks().begin()->trackId();
@@ -150,7 +153,7 @@ void NTupleTrackingParticles::produce(edm::Event& iEvent, const edm::EventSetup&
     iEvent.put(v_ntkhits  , prefix_ + "ntkhits"   + suffix_);
     iEvent.put(v_ntklayers, prefix_ + "ntklayers" + suffix_);
     iEvent.put(v_signal   , prefix_ + "signal"    + suffix_);
-    iEvent.put(v_stable   , prefix_ + "stable"    + suffix_);
+    iEvent.put(v_intime   , prefix_ + "intime"    + suffix_);
     iEvent.put(v_primary  , prefix_ + "primary"   + suffix_);
     iEvent.put(v_pdgId    , prefix_ + "pdgId"     + suffix_);
     iEvent.put(v_trkId    , prefix_ + "trkId"     + suffix_);

@@ -2,64 +2,61 @@
 #define AMSimulationIO_TTTrackReader_h_
 
 #include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack2.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTRoadReader.h"
 
-#include "TChain.h"
-#include "TFile.h"
-#include "TFileCollection.h"
-#include "TROOT.h"
-#include "TTree.h"
-#include "TString.h"
-#include <memory>
-#include <vector>
 
 namespace slhcl1tt {
 
-
 // _____________________________________________________________________________
-class TTTrackReader {
+class TTTrackReader : public TTRoadReader {
   public:
     TTTrackReader(int verbose=1);
     ~TTTrackReader();
 
-    // FIXME: implement this
+    int init(TString src, TString prefixRoad, TString prefixTrack, TString suffix);
 
-  private:
-    TChain* tchain;
-    int treenumber;
-    const int verbose_;
+    // Tracks
+    // FIXME
 };
 
+
 // _____________________________________________________________________________
-class TTTrackWriter {
+class TTTrackWriter : public BasicWriter {
   public:
     TTTrackWriter(int verbose=1);
     ~TTTrackWriter();
 
-    int init(TString out, TString prefix, TString suffix);
+    int init(TChain* tchain, TString out, TString prefix, TString suffix);
 
     void fill(const std::vector<TTTrack>& tracks);
 
-    Long64_t write();
+    void fill(const std::vector<TTTrack2>& tracks);
 
-  private:
+  protected:
     // Tracks
-    std::auto_ptr<std::vector<float> >              vt_px;
-    std::auto_ptr<std::vector<float> >              vt_py;
-    std::auto_ptr<std::vector<float> >              vt_pz;
-    std::auto_ptr<std::vector<float> >              vt_pt;
-    std::auto_ptr<std::vector<float> >              vt_eta;
-    std::auto_ptr<std::vector<float> >              vt_phi;
-    std::auto_ptr<std::vector<float> >              vt_vx;
-    std::auto_ptr<std::vector<float> >              vt_vy;
-    std::auto_ptr<std::vector<float> >              vt_vz;
-    std::auto_ptr<std::vector<float> >              vt_rinv;
-    std::auto_ptr<std::vector<float> >              vt_chi2;
-    std::auto_ptr<std::vector<float> >              vt_ptconsistency;
-    std::auto_ptr<std::vector<unsigned> >           vt_nstubs;
-
-    TFile* tfile;
-    TTree* ttree;
-    const int verbose_;
+    std::auto_ptr<std::vector<float> >                  vt_px;
+    std::auto_ptr<std::vector<float> >                  vt_py;
+    std::auto_ptr<std::vector<float> >                  vt_pz;
+    std::auto_ptr<std::vector<float> >                  vt_pt;
+    std::auto_ptr<std::vector<float> >                  vt_eta;
+    std::auto_ptr<std::vector<float> >                  vt_phi;
+    std::auto_ptr<std::vector<float> >                  vt_vx;
+    std::auto_ptr<std::vector<float> >                  vt_vy;
+    std::auto_ptr<std::vector<float> >                  vt_vz;
+    std::auto_ptr<std::vector<float> >                  vt_rinv;
+    std::auto_ptr<std::vector<float> >                  vt_phi0;
+    std::auto_ptr<std::vector<float> >                  vt_cottheta;
+    std::auto_ptr<std::vector<float> >                  vt_z0;
+    std::auto_ptr<std::vector<float> >                  vt_d0;
+    std::auto_ptr<std::vector<float> >                  vt_chi2;
+    std::auto_ptr<std::vector<int> >                    vt_ndof;
+    std::auto_ptr<std::vector<float> >                  vt_chi2_phi;
+    std::auto_ptr<std::vector<float> >                  vt_chi2_z;
+    std::auto_ptr<std::vector<int> >                    vt_tpId;
+    std::auto_ptr<std::vector<unsigned> >               vt_roadRef;
+    std::auto_ptr<std::vector<unsigned> >               vt_combRef;
+    std::auto_ptr<std::vector<std::vector<unsigned> > > vt_stubRefs;
 };
 
 }  // namespace slhcl1tt
