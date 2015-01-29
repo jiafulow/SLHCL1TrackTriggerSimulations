@@ -18,8 +18,8 @@ samples["tt27_tttt140"] = True
 
 sections = {}
 sections["coverage"     ] = False
-sections["roads"        ] = True
-sections["summary"      ] = False
+sections["roads"        ] = False
+sections["summary"      ] = True
 
 drawerInit = DrawerInit()
 gStyle.SetNumberContours(100)
@@ -60,6 +60,7 @@ settings = [
 #]
 
 settings_tt27 = [
+    ("sf0p5_nz1",   275290,  0.9),
     ("sf0p7_nz1",   107500,  0.9),
     ("sf0p7_nz2",   590260,  0.9),
     ("sf1_nz1"  ,    44810,  0.9),
@@ -575,32 +576,24 @@ if sections["summary"]:
     from collections import OrderedDict
     gStyle.SetNdivisions(520, "XYZ")
 
+    latex.SetTextSize(0.05)
     latex2 = TLatex()
     latex2.SetNDC(0)
     latex2.SetTextFont(42)
-    latex2.SetTextSize(0.03)
+    latex2.SetTextSize(0.04)
 
-    def parse_fixed(lines):
-        k, x, y = [line.split() for line in lines]
-        od = OrderedDict()
-        for i in xrange(len(x)):
-            if x[i] == "-1" or y[i] == "-1":
-                continue
-            od["%s" % (k[i])] = (float(x[i].replace(",","")), float(y[i].replace(",","")))
-        return od
-
-    def parse_projective(lines):
-        return parse_fixed(lines)
-
-    def parse_rational(lines):
+    def parse_lines(lines):
         k1, k2, x, y = [line.split() for line in lines]
         od = OrderedDict()
         for i in xrange(len(x)):
             if x[i] == "-1" or y[i] == "-1":
                 continue
-            od["(sf%s,nz%s)" % (k1[i], k2[i])] = (float(x[i].replace(",","")), float(y[i].replace(",","")))
+            if k1 == k2:
+                k = "%s" % (k1[i])
+            else:
+                k = "(%s,%s)" % (k1[i], k2[i])
+            od[k] = (float(x[i].replace(",","")), float(y[i].replace(",","")))
         return od
-
 
     def draw(plines, col=kBlack):
         gr = TGraph(len(plines))
@@ -610,12 +603,14 @@ if sections["summary"]:
             gr.SetPoint(i, v[1], v[0])
             i += 1
 
-        hframe = TH1F("hframe", "; <# combinations / BX>; # patterns", 100, 3e0, 1e3)
+        xmin, xmax = 10, 500
         ymin, ymax = 5e3, 5e6
+        hframe = TH1F("hframe", "; <# combinations/tower/BX>; # patterns/tower", 100, xmin, xmax)
         hframe.SetStats(0); hframe.SetMinimum(ymin); hframe.SetMaximum(ymax)
         gr.SetMarkerStyle(21); gr.SetMarkerSize(1.2); gr.SetMarkerColor(col)
 
         hframe.Draw()
+        latex.DrawLatex(0.12, 0.068, "10^{1}"); latex.DrawLatex(0.72, 0.068, "2#times10^{2}")
         gPad.SetLogx(1); gPad.SetLogy(1); gPad.SetGridx(1); gPad.SetGridy(1)
         gr.Draw("p")
         for k, v in plines.iteritems():
@@ -627,29 +622,78 @@ if sections["summary"]:
         donotdelete = [hframe, gr]
         return donotdelete
 
+    def draw2(plines, plines2, col=kBlack, col2=kBlack):
+        gr = TGraph(len(plines))
+        i = 0
+        for k, v in plines.iteritems():
+            print k, "-->", v
+            gr.SetPoint(i, v[1], v[0])
+            i += 1
+
+        gr2 = TGraph(len(plines2))
+        i = 0
+        for k, v in plines2.iteritems():
+            print k, "-->", v
+            gr2.SetPoint(i, v[1], v[0])
+            i += 1
+
+        xmin, xmax = 10, 500
+        ymin, ymax = 5e3, 5e6
+        hframe = TH1F("hframe", "; <# combinations/tower/BX>; # patterns/tower", 100, xmin, xmax)
+        hframe.SetStats(0); hframe.SetMinimum(ymin); hframe.SetMaximum(ymax)
+        gr.SetMarkerStyle(21); gr.SetMarkerSize(1.2); gr.SetMarkerColor(col)
+        gr2.SetMarkerStyle(21); gr2.SetMarkerSize(1.2); gr2.SetMarkerColor(col2)
+
+        hframe.Draw()
+        latex.DrawLatex(0.12, 0.068, "10^{1}"); latex.DrawLatex(0.72, 0.068, "2#times10^{2}")
+        gPad.SetLogx(1); gPad.SetLogy(1); gPad.SetGridx(1); gPad.SetGridy(1)
+        gr.Draw("p")
+        for k, v in plines.iteritems():
+            latex2.DrawLatex(v[1], v[0], "  #color[%i]{%s}" % (col,k))
+        gr2.Draw("p")
+        for k, v in plines2.iteritems():
+            latex2.DrawLatex(v[1], v[0], "  #color[%i]{%s}" % (col2,k))
+        CMS_label()
+        #save(imgdir, "summary")
+        #gPad.SetLogx(0); gPad.SetLogy(0); gPad.SetGridx(0); gPad.SetGridy(0)
+
+        donotdelete = [hframe, gr, gr2]
+        return donotdelete
+
 
     lines_fixed = [
+        "ss32	ss64	ss128	ss256	ss512	ss1024",
         "ss32	ss64	ss128	ss256	ss512	ss1024",
         "-1	5,002,400	1,314,880	344,890	92,530	27,940",
         "-1.0	18.7	38.3	75.6	147.8	397.9",
     ]
-    plines_fixed = parse_fixed(lines_fixed)
+    plines_fixed = parse_lines(lines_fixed)
     #d = draw(plines_fixed, col=blkrgb[3])
 
     lines_projective = [
         "600x0	400x0	200x0	200x1	100x2	20x10",
+        "600x0	400x0	200x0	200x1	100x2	20x10",
         "2,033,820	486,640	70,130	295,470	205,440	198,990",
         "11.7	17.5	47.2	33.6	42.6	79.2",
     ]
-    plines_projective = parse_projective(lines_projective)
+    plines_projective = parse_lines(lines_projective)
     #d = draw(plines_projective, col=blkrgb[2])
 
     lines_rational = [
-        "0.7	0.7	0.7	1	1	1	2	2	2",
-        "1	2	4	1	2	4	1	2	4",
-        "107,500	590,260	           -1	44,810	252,920	1,180,040	9,730	52,720	270,890",
-        "33.4	18.4	-1.0	68.5	33.2	16.9	194.6	90.9	46.1",
+        "0.5	0.7	0.7	0.7	1	1	1	2	2	2",
+        "1	1	2	4	1	2	4	1	2	4",
+        "275,290	107,500	590,260	-1	44,810	252,920	1,180,040	9,730	52,720	270,890",
+        "22.5	33.4	18.4	-1.0	68.5	33.2	16.9	194.6	90.9	46.1",
     ]
-    plines_rational = parse_rational(lines_rational)
-    d = draw(plines_rational, col=blkrgb[1])
+    plines_rational = parse_lines(lines_rational)
+    #d = draw(plines_rational, col=blkrgb[1])
+
+    lines_rational2 = [
+        "0.5	0.7	1	2",
+        "1	1	1	1",
+        "275,290	107,500	44,810	9,730",
+        "22.5	33.4	68.5	194.6",
+    ]
+    plines_rational2 = parse_lines(lines_rational2)
+    d = draw2(plines_rational2, plines_fixed, col=blkrgb[1], col2=blkrgb[3])
 
