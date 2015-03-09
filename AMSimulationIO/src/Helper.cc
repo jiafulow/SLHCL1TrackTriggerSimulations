@@ -1,8 +1,6 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/Helper.h"
 
 #include "TStopwatch.h"
-#include "TString.h"
-#include "TTree.h"
 #include "TBranchElement.h"
 
 namespace slhcl1tt {

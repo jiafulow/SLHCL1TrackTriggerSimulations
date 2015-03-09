@@ -19,7 +19,6 @@ int main(int argc, char **argv) {
     generic.add_options()
         ("version"             , "Print version")
         ("help,h"              , "Produce help message")
-        ("gensim,G"            , "Convert from a root file containing GenParticle or SimTrack info to a text file")
         ("stubs,S"             , "Convert from a root file containing stubs info to a text file")
         ("bank,B"              , "Convert from a root file containing pattern bank to a text file")
         ("verbosity,v"         , po::value<int>(&verbose)->default_value(1), "Verbosity level (-1 = very quiet; 0 = quiet, 1 = verbose, 2+ = debug)")

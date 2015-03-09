@@ -96,8 +96,9 @@ void NTupleTrackingParticles::produce(edm::Event& iEvent, const edm::EventSetup&
                 //        stable = false;
                 //}
 
-                // Primary: pT > 0.2 GeV, |d0| < 0.1 cm, |z0| < 25 cm
-                bool primary = (it->pt() > 0.2 && sqrt(it->vx() * it->vx() + it->vy() * it->vy()) < 0.1 && fabs(it->vz()) < 25.0);
+                // Primary: pT > 0.2 GeV, |rho0| < 0.5 cm, |z0| < 30 cm (Nicola Pozzobon's definition)
+                bool primary = (it->pt() > 0.2 && sqrt(it->vx() * it->vx() + it->vy() * it->vy()) < 0.5 && fabs(it->vz()) < 30.0);
+                //bool primary = (it->pt() > 0.2 && sqrt(it->vx() * it->vx() + it->vy() * it->vy()) < 0.1 && fabs(it->vz()) < 25.0);
 
                 // Fill the vectors
                 v_px->push_back(it->px()); // first simTrack

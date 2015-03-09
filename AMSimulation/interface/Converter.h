@@ -5,8 +5,6 @@
 using namespace slhcl1tt;
 
 #include "TFile.h"
-#include "TTree.h"
-#include "TString.h"
 
 class Converter {
   public:

@@ -64,6 +64,7 @@ AnalyzerModuleCoordinates::AnalyzerModuleCoordinates(const edm::ParameterSet& iC
 AnalyzerModuleCoordinates::~AnalyzerModuleCoordinates() {}
 
 
+namespace {
 uint32_t getModuleLayer(const DetId& id) {
     if (id.subdetId() == (int) PixelSubdetector::PixelBarrel) {
         PXBDetId pxbId(id);
@@ -119,6 +120,7 @@ uint32_t getModuleId(const DetId& id) {
     uint32_t module = getModuleModule(id);
     assert(layer != 999999 && ladder != 999999 && module != 999999);
     return 10000*layer + 100*(ladder-1) + (module-1)/2;
+}
 }
 
 

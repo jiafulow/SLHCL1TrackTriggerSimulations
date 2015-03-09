@@ -1,14 +1,4 @@
 <lcgdict>
-<!--class name="edm::Wrapper<slhcl1tt::TTSuperstrip>"/-->
-<!--class name="edm::Wrapper<slhcl1tt::TTHit>"/-->
-<!--class name="edm::Wrapper<slhcl1tt::TTPattern>"/-->
-<!--class name="edm::Wrapper<slhcl1tt::TTRoad>"/-->
-<!--class name="std::vector<slhcl1tt::TTSuperstrip>"/-->
-<!--class name="std::vector<slhcl1tt::TTHit>"/-->
-<!--class name="std::vector<slhcl1tt::TTPattern>"/-->
 <!--class name="std::vector<slhcl1tt::TTRoad>"/-->
-<!--class name="edm::Wrapper<std::vector<slhcl1tt::TTSuperstrip> >"/-->
-<!--class name="edm::Wrapper<std::vector<slhcl1tt::TTHit> >"/-->
-<!--class name="edm::Wrapper<std::vector<slhcl1tt::TTPattern> >"/-->
-<!--class name="edm::Wrapper<std::vector<slhcl1tt::TTRoad> >"/-->
+<!--class name="std::vector<slhcl1tt::TTHit>"/-->
 </lcgdict>

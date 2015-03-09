@@ -3,6 +3,24 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/Helper.h"
 using namespace slhcl1tt;
 
+namespace{
+void nullVectorElements(std::vector<float>* v, const std::vector<bool>& nulling) {
+    assert(v->size() == nulling.size());
+    for (unsigned i=0; i<nulling.size(); ++i) {
+        if (nulling.at(i))
+            v->at(i) = 0.;
+    }
+}
+
+void nullVectorElements(std::vector<int>* v, const std::vector<bool>& nulling) {
+    assert(v->size() == nulling.size());
+    for (unsigned i=0; i<nulling.size(); ++i) {
+        if (nulling.at(i))
+            v->at(i) = 0;
+    }
+}
+}
+
 
 // _____________________________________________________________________________
 BasicReader::BasicReader(int verbose)
@@ -22,8 +40,8 @@ BasicReader::BasicReader(int verbose)
   vb_phi              (0),
   vb_coordx           (0),
   vb_coordy           (0),
-  vb_roughPt          (0),
   vb_trigBend         (0),
+  vb_roughPt          (0),
   vb_clusWidth        (0),
   vb_modId            (0),
   vb_tpId             (0),
@@ -79,12 +97,28 @@ int BasicReader::init(TString src, bool full) {
     tchain->SetBranchAddress("TTStubs_phi"      , &(vb_phi));
     tchain->SetBranchAddress("TTStubs_coordx"   , &(vb_coordx));
     tchain->SetBranchAddress("TTStubs_coordy"   , &(vb_coordy));
-    if (full)  tchain->SetBranchAddress("TTStubs_roughPt"  , &(vb_roughPt));
     tchain->SetBranchAddress("TTStubs_trigBend" , &(vb_trigBend));
+  //if (full)  tchain->SetBranchAddress("TTStubs_roughPt"  , &(vb_roughPt));
   //if (full)  tchain->SetBranchAddress("TTStubs_clusWidth", &(vb_clusWidth));
     tchain->SetBranchAddress("TTStubs_modId"    , &(vb_modId));
     tchain->SetBranchAddress("TTStubs_tpId"     , &(vb_tpId));
     return 0;
+}
+
+void BasicReader::nullStubs(const std::vector<bool>& nulling) {
+    nullVectorElements(vb_x        , nulling);
+    nullVectorElements(vb_y        , nulling);
+    nullVectorElements(vb_z        , nulling);
+    nullVectorElements(vb_r        , nulling);
+    nullVectorElements(vb_eta      , nulling);
+    nullVectorElements(vb_phi      , nulling);
+    nullVectorElements(vb_coordx   , nulling);
+    nullVectorElements(vb_coordy   , nulling);
+    nullVectorElements(vb_trigBend , nulling);
+  //nullVectorElements(vb_roughPt  , nulling);
+  //nullVectorElements(vb_clusWidth, nulling);
+  //nullVectorElements(vb_modId    , nulling);  // don't null this guy
+    nullVectorElements(vb_tpId     , nulling);
 }
 
 
@@ -109,9 +143,9 @@ int BasicWriter::init(TChain* tchain, TString out) {
     tfile = TFile::Open(out, "RECREATE");
 
     if (tfile) {
-        if (verbose_)  std::cout << Info() << "Successfully recreated " << out << std::endl;
+        if (verbose_)  std::cout << Info() << "Successfully opened " << out << std::endl;
     } else {
-        std::cout << Error() << "Failed to recreate " << out << std::endl;
+        std::cout << Error() << "Failed to open " << out << std::endl;
         return 1;
     }
 

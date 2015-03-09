@@ -205,6 +205,18 @@ void NTupleMaker::makeLeafMap() {
     leafmap["vector<vector<Long64_t> >"] = LONG64_VV;
     leafmap["vector<vector<ULong64_t> >"] = ULONG64_VV;
     leafmap["vector<vector<bool> >"] = BOOL_VV;
+
+    leafmap["vector<vector<vector<char> > >"] = CHAR_VVV;
+    leafmap["vector<vector<vector<unsigned char> > >"] = UCHAR_VVV;
+    leafmap["vector<vector<vector<short> > >"] = SHORT_VVV;
+    leafmap["vector<vector<vector<unsigned short> > >"] = USHORT_VVV;
+    leafmap["vector<vector<vector<int> > >"] = INT_VVV;
+    leafmap["vector<vector<vector<unsigned int> > >"] = UINT_VVV;
+    leafmap["vector<vector<vector<float> > >"] = FLOAT_VVV;
+    leafmap["vector<vector<vector<double> > >"] = DOUBLE_VVV;
+    leafmap["vector<vector<vector<Long64_t> > >"] = LONG64_VVV;
+    leafmap["vector<vector<vector<ULong64_t> > >"] = ULONG64_VVV;
+    leafmap["vector<vector<vector<bool> > >"] = BOOL_VVV;
 }
 
 void NTupleMaker::makeConnector(const TBranch* branch, TTree* tree) {
@@ -214,43 +226,55 @@ void NTupleMaker::makeConnector(const TBranch* branch, TTree* tree) {
     // Determine the leaf type
     std::map<TString, LeafType>::iterator found = leafmap.find(branchClassName);
     switch (found->second) {
-        case CHAR_T    : connectors.push_back(new TypedBranchConnector<Char_t>    (branchName, "B", tree) ); break;
-        case UCHAR_T   : connectors.push_back(new TypedBranchConnector<UChar_t>   (branchName, "b", tree) ); break;
-        case SHORT_T   : connectors.push_back(new TypedBranchConnector<Short_t>   (branchName, "S", tree) ); break;
-        case USHORT_T  : connectors.push_back(new TypedBranchConnector<UShort_t>  (branchName, "s", tree) ); break;
-        case INT_T     : connectors.push_back(new TypedBranchConnector<Int_t>     (branchName, "I", tree) ); break;
-        case UINT_T    : connectors.push_back(new TypedBranchConnector<UInt_t>    (branchName, "i", tree) ); break;
-        case FLOAT_T   : connectors.push_back(new TypedBranchConnector<Float_t>   (branchName, "F", tree) ); break;
-        case DOUBLE_T  : connectors.push_back(new TypedBranchConnector<Double_t>  (branchName, "D", tree) ); break;
-        case LONG64_T  : connectors.push_back(new TypedBranchConnector<Long64_t>  (branchName, "L", tree) ); break;
-        case ULONG64_T : connectors.push_back(new TypedBranchConnector<ULong64_t> (branchName, "l", tree) ); break;
-        case BOOL_T    : connectors.push_back(new TypedBranchConnector<Bool_t>    (branchName, "O", tree) ); break;
+        case CHAR_T     : connectors.push_back(new TypedBranchConnector<Char_t>    (branchName, "B", tree) ); break;
+        case UCHAR_T    : connectors.push_back(new TypedBranchConnector<UChar_t>   (branchName, "b", tree) ); break;
+        case SHORT_T    : connectors.push_back(new TypedBranchConnector<Short_t>   (branchName, "S", tree) ); break;
+        case USHORT_T   : connectors.push_back(new TypedBranchConnector<UShort_t>  (branchName, "s", tree) ); break;
+        case INT_T      : connectors.push_back(new TypedBranchConnector<Int_t>     (branchName, "I", tree) ); break;
+        case UINT_T     : connectors.push_back(new TypedBranchConnector<UInt_t>    (branchName, "i", tree) ); break;
+        case FLOAT_T    : connectors.push_back(new TypedBranchConnector<Float_t>   (branchName, "F", tree) ); break;
+        case DOUBLE_T   : connectors.push_back(new TypedBranchConnector<Double_t>  (branchName, "D", tree) ); break;
+        case LONG64_T   : connectors.push_back(new TypedBranchConnector<Long64_t>  (branchName, "L", tree) ); break;
+        case ULONG64_T  : connectors.push_back(new TypedBranchConnector<ULong64_t> (branchName, "l", tree) ); break;
+        case BOOL_T     : connectors.push_back(new TypedBranchConnector<Bool_t>    (branchName, "O", tree) ); break;
 
-        case CHAR_V    : connectors.push_back(new TypedBranchConnector<std::vector<Char_t> >    (branchName, "", tree) ); break;
-        case UCHAR_V   : connectors.push_back(new TypedBranchConnector<std::vector<UChar_t> >   (branchName, "", tree) ); break;
-        case SHORT_V   : connectors.push_back(new TypedBranchConnector<std::vector<Short_t> >   (branchName, "", tree) ); break;
-        case USHORT_V  : connectors.push_back(new TypedBranchConnector<std::vector<UShort_t> >  (branchName, "", tree) ); break;
-        case INT_V     : connectors.push_back(new TypedBranchConnector<std::vector<Int_t> >     (branchName, "", tree) ); break;
-        case UINT_V    : connectors.push_back(new TypedBranchConnector<std::vector<UInt_t> >    (branchName, "", tree) ); break;
-        case FLOAT_V   : connectors.push_back(new TypedBranchConnector<std::vector<Float_t> >   (branchName, "", tree) ); break;
-        case DOUBLE_V  : connectors.push_back(new TypedBranchConnector<std::vector<Double_t> >  (branchName, "", tree) ); break;
-        case LONG64_V  : connectors.push_back(new TypedBranchConnector<std::vector<Long64_t> >  (branchName, "", tree) ); break;
-        case ULONG64_V : connectors.push_back(new TypedBranchConnector<std::vector<ULong64_t> > (branchName, "", tree) ); break;
-        case BOOL_V    : connectors.push_back(new TypedBranchConnector<std::vector<Bool_t> >    (branchName, "", tree) ); break;
+        case CHAR_V     : connectors.push_back(new TypedBranchConnector<std::vector<Char_t> >    (branchName, "", tree) ); break;
+        case UCHAR_V    : connectors.push_back(new TypedBranchConnector<std::vector<UChar_t> >   (branchName, "", tree) ); break;
+        case SHORT_V    : connectors.push_back(new TypedBranchConnector<std::vector<Short_t> >   (branchName, "", tree) ); break;
+        case USHORT_V   : connectors.push_back(new TypedBranchConnector<std::vector<UShort_t> >  (branchName, "", tree) ); break;
+        case INT_V      : connectors.push_back(new TypedBranchConnector<std::vector<Int_t> >     (branchName, "", tree) ); break;
+        case UINT_V     : connectors.push_back(new TypedBranchConnector<std::vector<UInt_t> >    (branchName, "", tree) ); break;
+        case FLOAT_V    : connectors.push_back(new TypedBranchConnector<std::vector<Float_t> >   (branchName, "", tree) ); break;
+        case DOUBLE_V   : connectors.push_back(new TypedBranchConnector<std::vector<Double_t> >  (branchName, "", tree) ); break;
+        case LONG64_V   : connectors.push_back(new TypedBranchConnector<std::vector<Long64_t> >  (branchName, "", tree) ); break;
+        case ULONG64_V  : connectors.push_back(new TypedBranchConnector<std::vector<ULong64_t> > (branchName, "", tree) ); break;
+        case BOOL_V     : connectors.push_back(new TypedBranchConnector<std::vector<Bool_t> >    (branchName, "", tree) ); break;
 
-        case CHAR_VV   : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Char_t> > >    (branchName, "", tree) ); break;
-        case UCHAR_VV  : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<UChar_t> > >   (branchName, "", tree) ); break;
-        case SHORT_VV  : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Short_t> > >   (branchName, "", tree) ); break;
-        case USHORT_VV : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<UShort_t> > >  (branchName, "", tree) ); break;
-        case INT_VV    : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Int_t> > >     (branchName, "", tree) ); break;
-        case UINT_VV   : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<UInt_t> > >    (branchName, "", tree) ); break;
-        case FLOAT_VV  : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Float_t> > >   (branchName, "", tree) ); break;
-        case DOUBLE_VV : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Double_t> > >  (branchName, "", tree) ); break;
-        case LONG64_VV : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Long64_t> > >  (branchName, "", tree) ); break;
-        case ULONG64_VV: connectors.push_back(new TypedBranchConnector<std::vector<std::vector<ULong64_t> > > (branchName, "", tree) ); break;
-        case BOOL_VV   : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Bool_t> > >    (branchName, "", tree) ); break;
+        case CHAR_VV    : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Char_t> > >    (branchName, "", tree) ); break;
+        case UCHAR_VV   : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<UChar_t> > >   (branchName, "", tree) ); break;
+        case SHORT_VV   : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Short_t> > >   (branchName, "", tree) ); break;
+        case USHORT_VV  : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<UShort_t> > >  (branchName, "", tree) ); break;
+        case INT_VV     : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Int_t> > >     (branchName, "", tree) ); break;
+        case UINT_VV    : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<UInt_t> > >    (branchName, "", tree) ); break;
+        case FLOAT_VV   : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Float_t> > >   (branchName, "", tree) ); break;
+        case DOUBLE_VV  : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Double_t> > >  (branchName, "", tree) ); break;
+        case LONG64_VV  : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Long64_t> > >  (branchName, "", tree) ); break;
+        case ULONG64_VV : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<ULong64_t> > > (branchName, "", tree) ); break;
+        case BOOL_VV    : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<Bool_t> > >    (branchName, "", tree) ); break;
 
-        default       : std::cout << Error() << "Cannot handle leaf of ClassName: " << branchClassName << std::endl; break;
+        case CHAR_VVV   : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<std::vector<Char_t> > > >    (branchName, "", tree) ); break;
+        case UCHAR_VVV  : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<std::vector<UChar_t> > > >   (branchName, "", tree) ); break;
+        case SHORT_VVV  : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<std::vector<Short_t> > > >   (branchName, "", tree) ); break;
+        case USHORT_VVV : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<std::vector<UShort_t> > > >  (branchName, "", tree) ); break;
+        case INT_VVV    : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<std::vector<Int_t> > > >     (branchName, "", tree) ); break;
+        case UINT_VVV   : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<std::vector<UInt_t> > > >    (branchName, "", tree) ); break;
+        case FLOAT_VVV  : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<std::vector<Float_t> > > >   (branchName, "", tree) ); break;
+        case DOUBLE_VVV : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<std::vector<Double_t> > > >  (branchName, "", tree) ); break;
+        case LONG64_VVV : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<std::vector<Long64_t> > > >  (branchName, "", tree) ); break;
+        case ULONG64_VVV: connectors.push_back(new TypedBranchConnector<std::vector<std::vector<std::vector<ULong64_t> > > > (branchName, "", tree) ); break;
+        case BOOL_VVV   : connectors.push_back(new TypedBranchConnector<std::vector<std::vector<std::vector<Bool_t> > > >    (branchName, "", tree) ); break;
+
+        default         : std::cout << Error() << "Cannot handle leaf of ClassName: " << branchClassName << std::endl; break;
     }
 }
 

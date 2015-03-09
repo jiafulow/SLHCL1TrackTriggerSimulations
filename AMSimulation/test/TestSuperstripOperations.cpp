@@ -1,243 +1,368 @@
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TriggerTowerMap.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/SuperstripArbiter.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/SuperstripStitcher.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 using namespace slhcl1tt;
 
 #include <cppunit/extensions/HelperMacros.h>
+#include <stdexcept>
 
-// FIXME: implement this
 
-/*
-// Code taken from https://docs.python.org/2/library/itertools.html#itertools.combinations
-static std::vector<std::array<unsigned,8> > combinations(const std::vector<unsigned>& pool, int k) {
-    unsigned n = pool.size();
-    int i, j;
-    std::vector<unsigned> indices;
-    for (i=0; i<k; ++i)
-        indices.push_back(i);
+// _____________________________________________________________________________
+// Test fixedwidth superstrip
+unsigned test_ss256_nz2_tt27(unsigned moduleId, unsigned moduleCode, float strip, float segment) {
+    unsigned ss = unsigned(strip) / 256;
 
-    std::vector<std::array<unsigned,8> > ret;
-    std::array<unsigned,8> ret_inner;
-    while (true) {
-        ret_inner.fill(0);
-        for (i=0; i<k; ++i) {
-            ret_inner.at(i) = pool.at(indices[i]);
-        }
-        ret.push_back(ret_inner);
+    if (isPSModule(moduleId))
+        ss |= ((unsigned(segment) / 16) << 2);
+    else
+        ss |= ((unsigned(segment*16) / 16) << 2);
 
-        //for (i=0; i<k; ++i) {
-        //    std::cout << indices[i] << ",";
-        //}
-        //std::cout << std::endl;
+    ss |= (moduleCode << (2+1));
+    return ss;
+}
 
-        for (i=k-1; i>=0; --i) {
-            if (indices[i] != i + n - k)
-                break;
-        }
-        if (i == -1) break;
+unsigned test_ss1_nz32_tt27(unsigned moduleId, unsigned moduleCode, float strip, float segment) {
+    unsigned ss = unsigned(strip) / 1;
 
-        indices[i] += 1;
-        for (j=i+1; j<k; ++j) {
-            indices[j] = indices[j-1] + 1;
-        }
+    if (isPSModule(moduleId))
+        ss |= ((unsigned(segment) / 1) << 10);
+    else
+        ss |= ((unsigned(segment*16) / 1) << 10);
+
+    ss |= (moduleCode << (10+5));
+    return ss;
+}
+
+unsigned test_ss1024_nz1_tt27(unsigned moduleId, unsigned moduleCode, float strip, float segment) {
+    unsigned ss = unsigned(strip) / 1024;
+
+    if (isPSModule(moduleId))
+        ss |= ((unsigned(segment) / 32) << 0);
+    else
+        ss |= ((unsigned(segment*16) / 32) << 0);
+
+    ss |= (moduleCode << 0);
+    return ss;
+}
+
+// _____________________________________________________________________________
+// Test projective superstrip (from the old version)
+unsigned superstrip_projective(unsigned lay, float phi, float z,
+                               const float unit_phi, const float divide_z) {
+    unsigned h = 0;
+
+    static const float edges_phi[6*2] = {0.564430,1.791765,0.653554,1.710419,0.641981,1.756567,0.717273,1.638922,0.658179,1.673851,0.618448,1.778293};
+    static const float edges_z[6*2] = {-6.7127,26.9799,-6.7797,36.7048,-5.2542,47.7511,-9.5318,59.4103,-9.5318,78.7372,-9.5318,88.9935};
+    float unit_z   = (edges_z[2*5+1] - edges_z[2*5]) / divide_z;  // outermost has the largest unit
+
+    int n_phi = floor(M_PI / 4. / unit_phi + 0.5);
+    int n_z   = divide_z;
+    assert(n_phi > 0 && n_z > 0);
+
+    if (lay < 16) {
+        unit_z   = (edges_z[2*lay+1] - edges_z[2*lay]) / divide_z;
+
+        phi -= edges_phi[2*lay];  // lowest phi value in trigger tower
+        z   -= edges_z[2*lay];    // lowest z value in trigger tower
+
+        int i_phi = floor(phi / unit_phi);
+        int i_z   = floor(z   / unit_z);
+        i_phi = (i_phi < 0) ? 0 : (i_phi >= n_phi) ? (n_phi - 1) : i_phi;  // proper range
+        i_z   = (i_z   < 0) ? 0 : (i_z   >= n_z  ) ? (n_z   - 1) : i_z  ;  // proper range
+
+        h = i_z * n_phi + i_phi;
     }
-    return ret;
+
+    return h;
+}
+
+// _____________________________________________________________________________
+// Test fountain superstrip (from the old version)
+unsigned superstrip_fountain(unsigned lay, float phi, float z,
+                             const float scale_phi, const float divide_z) {
+    unsigned h = 0;
+
+    static const float units_phi[6] = {0.00381, 0.00439, 0.00459, 0.00485, 0.00523, 0.00575};
+    static const float edges_phi[6*2] = {0.564430,1.791765,0.653554,1.710419,0.641981,1.756567,0.717273,1.638922,0.658179,1.673851,0.618448,1.778293};
+    static const float edges_z[6*2] = {-6.7127,26.9799,-6.7797,36.7048,-5.2542,47.7511,-9.5318,59.4103,-9.5318,78.7372,-9.5318,88.9935};
+
+    float unit_phi = units_phi[0] * scale_phi;                    // innermost has the smallest unit
+    float unit_z   = (edges_z[2*5+1] - edges_z[2*5]) / divide_z;  // outermost has the largest unit
+    //if (unit_phi > M_PI*2.)  unit_phi = M_PI*2.;
+    //if (unit_z   > 2.2*2. )  unit_z   = 2.2*2.;
+    int n_phi = floor((edges_phi[2*lay+1] - edges_phi[2*lay]) / unit_phi + 0.5);
+    int n_z   = divide_z;
+    assert(n_phi > 0 && n_z > 0);
+
+    if (lay < 6) {  // barrel only
+        unit_phi = units_phi[lay] * scale_phi;
+        unit_z   = (edges_z[2*lay+1] - edges_z[2*lay]) / divide_z;
+        //if (unit_phi > M_PI*2.)  unit_phi = M_PI*2.;
+        //if (unit_z   > 2.2*2. )  unit_z   = 2.2*2.;
+
+        phi -= edges_phi[2*lay];  // lowest phi value in trigger tower
+        z   -= edges_z[2*lay];    // lowest z value in trigger tower
+
+        int i_phi = floor(phi / unit_phi);
+        int i_z   = floor(z   / unit_z);
+        i_phi = (i_phi < 0) ? 0 : (i_phi >= n_phi) ? (n_phi - 1) : i_phi;  // proper range
+        i_z   = (i_z   < 0) ? 0 : (i_z   >= n_z  ) ? (n_z   - 1) : i_z  ;  // proper range
+
+        h = i_z * n_phi + i_phi;
+    }
+
+    return h;
 }
 
 
+// _____________________________________________________________________________
+// Unit test class
 class TestSuperstripOperations : public CppUnit::TestFixture  {
 
 CPPUNIT_TEST_SUITE(TestSuperstripOperations);
-CPPUNIT_TEST(testSubLadder);
-CPPUNIT_TEST(testSubModule);
-CPPUNIT_TEST(testHashModule);
-CPPUNIT_TEST(testHash);
-CPPUNIT_TEST(testStitch);
+CPPUNIT_TEST(testArbiterDefinition);
+CPPUNIT_TEST(testArbiterFixedwidth);
+CPPUNIT_TEST(testArbiterProjective);
+CPPUNIT_TEST(testArbiterFountain);
 CPPUNIT_TEST_SUITE_END();
 
 private:
-    SuperstripArbiter *arbiter_;
-    SuperstripHasher *hasher_;
-    SuperstripStitcher *stitcher_;
-    std::vector<unsigned> values_;
+    TriggerTowerMap   * ttmap_;
+    SuperstripArbiter * arbiter_;
+
+    unsigned                 tt_;
+    std::map<unsigned, bool> ttrmap_;
 
 public:
     void setUp() {
-        int nLayers = 6;
-        int nFakeSuperstrips = 3;
+        ttmap_   = new TriggerTowerMap();
+        arbiter_ = new SuperstripArbiter();
 
-        std::vector<unsigned> subLadderVarSize = {8, 16, 32, 16, 16, 32};
-        std::vector<unsigned> subModuleVarSize = {256, 256, 256, 256, 512, 512};
-        std::vector<unsigned> subLadderECVarSize = {8, 8, 8, 16, 16, 16, 16, 32, 32, 16, 16, 16, 16, 32, 32};
-        std::vector<unsigned> subModuleECVarSize = {256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 512, 512, 512, 512};
-        arbiter_ = new SuperstripArbiter(subLadderVarSize, subModuleVarSize, subLadderECVarSize, subModuleECVarSize);
-        //arbiter_->print();
 
-        //id_type subLadderNBits = msb(32/arbiter_->minSubLadderSize());
-        //id_type subModuleNBits = msb(1024/arbiter_->minSubModuleSize());
-        id_type subLadderNBits = 1;
-        id_type subModuleNBits = 5;
-        hasher_ = new SuperstripHasher(subLadderNBits, subModuleNBits);
-        //hasher_->print();
+        TString datadir = std::getenv("CMSSW_BASE");
+        datadir += "/src/SLHCL1TrackTriggerSimulations/AMSimulation/data/";
+        TString csvfile1 = datadir + "trigger_sector_map.csv";
+        TString csvfile2 = datadir + "trigger_sector_boundaries.csv";
+        ttmap_ -> readTriggerTowerMap(csvfile1);
+        ttmap_ -> readTriggerTowerBoundaries(csvfile2);
 
-        stitcher_ = new SuperstripStitcher(nLayers, nFakeSuperstrips, 1);
-
-        // Read module ids
-        unsigned i = 0, j = 0;
-        std::string line;
-        std::ifstream ifs("src/SLHCL1TrackTriggerSimulations/AMSimulation/data/module_connections.csv");
-        while (std::getline(ifs, line)) {
-            std::istringstream iss(line);
-            std::string issline;
-            j = 0;
-            while (std::getline(iss, issline, ',')) {  // split by commas
-                if (i != 0) {
-                    unsigned v = std::stoi(issline);
-                    if (j == 4) {  // skip the first line, keep the fourth index
-                        values_.push_back(v);
-                        break;
-                    }
-                    ++j;
-                }
-            }
-            ++i;
-        }
+        tt_ = 27;
+        ttrmap_ = ttmap_ -> getTriggerTowerReverseMap(tt_);
     }
 
     void tearDown() {
-        delete arbiter_;
-        delete hasher_;
-        delete stitcher_;
+        if (ttmap_)     delete ttmap_;
+        if (arbiter_)   delete arbiter_;
     }
 
-    void testSubLadder() {
-        // half-strip
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->subladder( 50000, 31*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder( 60000, 31*2));
-        CPPUNIT_ASSERT_EQUAL(0U, arbiter_->subladder( 70000, 31*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder( 80000,  1*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder( 90000,  1*2));
-        CPPUNIT_ASSERT_EQUAL(0U, arbiter_->subladder(100000,  1*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->subladder(110000, 31*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->subladder(120100, 31*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->subladder(130200, 31*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder(140300, 31*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder(150400, 31*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder(180500, 31*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder(190600, 31*2));
-        CPPUNIT_ASSERT_EQUAL(0U, arbiter_->subladder(200700, 31*2));
-        CPPUNIT_ASSERT_EQUAL(0U, arbiter_->subladder(210800, 31*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder(220900,  1*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder(111000,  1*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder(121100,  1*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder(131200,  1*2));
-        CPPUNIT_ASSERT_EQUAL(0U, arbiter_->subladder(141300,  1*2));
-        CPPUNIT_ASSERT_EQUAL(0U, arbiter_->subladder(151400,  1*2));
+    void testArbiterDefinition() {
+        TString ss = "ss0_nz32";
+        CPPUNIT_ASSERT_THROW(arbiter_ -> setDefinition(ss, tt_, ttmap_), std::invalid_argument);
 
-        // full-strip
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->subladder( 50000, 31, false));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder( 80000,  1, false));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->subladder(110000, 31, false));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->subladder(220900,  1, false));
+        ss = "ss1_nz0";
+        CPPUNIT_ASSERT_THROW(arbiter_ -> setDefinition(ss, tt_, ttmap_), std::invalid_argument);
+
+        ss = "ss1025_nz32";
+        CPPUNIT_ASSERT_THROW(arbiter_ -> setDefinition(ss, tt_, ttmap_), std::invalid_argument);
+
+        ss = "ss1_nz33";
+        CPPUNIT_ASSERT_THROW(arbiter_ -> setDefinition(ss, tt_, ttmap_), std::invalid_argument);
+
+        ss = "ss3_nz2";
+        CPPUNIT_ASSERT_THROW(arbiter_ -> setDefinition(ss, tt_, ttmap_), std::invalid_argument);
+
+        ss = "ss256_nz3";
+        CPPUNIT_ASSERT_THROW(arbiter_ -> setDefinition(ss, tt_, ttmap_), std::invalid_argument);
     }
 
-    void testSubModule() {
-        // half-strip
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule( 50000,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule( 60000,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule( 70000,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule( 80000, 1015*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->submodule( 90000, 1015*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->submodule(100000, 1015*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(110000,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(120100,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(130200,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(140300,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(150400,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(180500,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(190600,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(200700,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(210800,  959*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(220900, 1015*2));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(111000, 1015*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->submodule(121100, 1015*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->submodule(131200, 1015*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->submodule(141300, 1015*2));
-        CPPUNIT_ASSERT_EQUAL(1U, arbiter_->submodule(151400, 1015*2));
+    void testArbiterFixedwidth() {
+        if (true) {
+            TString ss = "ss256_nz2";
+            arbiter_ -> setDefinition(ss, tt_, ttmap_);
+            arbiter_ -> print();
 
-        // full-strip
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule( 50000,  959, false));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule( 80000, 1015, false));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(110000,  959, false));
-        CPPUNIT_ASSERT_EQUAL(3U, arbiter_->submodule(220900, 1015, false));
+            unsigned lay = 5;
+            unsigned i = 0;
+            for (auto itmap : ttrmap_) {
+                unsigned moduleId = itmap.first;
+                if (lay != decodeLayer(moduleId)) {  // new layer
+                    ++lay;
+                    i = 0;
+                }
+
+                for (unsigned j=0; j<32; ++j) {
+                    if (!isPSModule(moduleId) && j == 2)  // for 2S modules, j=0,1
+                        break;
+                    float segment = j;
+
+                    for (unsigned k=0; k<1024; ++k) {
+                        float strip = k;
+
+                        unsigned ss = arbiter_ -> superstripLocal(moduleId, strip, segment);
+                        unsigned ss256 = test_ss256_nz2_tt27(moduleId, i, strip, segment);
+                        //std::cout << moduleId << " " << i << " " << strip << " " << segment << std::endl;
+
+                        CPPUNIT_ASSERT_EQUAL(ss256, ss);
+                    }
+                }
+                ++i;
+            }
+        }
+
+        if (true) {
+            TString ss = "ss1_nz32";
+            arbiter_ -> setDefinition(ss, tt_, ttmap_);
+            arbiter_ -> print();
+
+            unsigned lay = 5;
+            unsigned i = 0;
+            for (auto itmap : ttrmap_) {
+                unsigned moduleId = itmap.first;
+                if (lay != decodeLayer(moduleId)) {  // new layer
+                    ++lay;
+                    i = 0;
+                }
+
+                for (unsigned j=0; j<32; ++j) {
+                    if (!isPSModule(moduleId) && j == 2)  // for 2S modules, j=0,1
+                        break;
+                    float segment = j;
+
+                    for (unsigned k=0; k<1024; ++k) {
+                        float strip = k;
+
+                        unsigned ss = arbiter_ -> superstripLocal(moduleId, strip, segment);
+                        unsigned ss1 = test_ss1_nz32_tt27(moduleId, i, strip, segment);
+                        //std::cout << moduleId << " " << i << " " << strip << " " << segment << std::endl;
+
+                        CPPUNIT_ASSERT_EQUAL(ss1, ss);
+                    }
+                }
+                ++i;
+            }
+        }
+
+        if (false) {
+            TString ss = "ss1024_nz1";
+            arbiter_ -> setDefinition(ss, tt_, ttmap_);
+            arbiter_ -> print();
+
+            unsigned lay = 5;
+            unsigned i = 0;
+            for (auto itmap : ttrmap_) {
+                unsigned moduleId = itmap.first;
+                if (lay != decodeLayer(moduleId)) {  // new layer
+                    ++lay;
+                    i = 0;
+                }
+
+                for (unsigned j=0; j<32; ++j) {
+                    if (!isPSModule(moduleId) && j == 2)  // for 2S modules, j=0,1
+                        break;
+                    float segment = j;
+
+                    for (unsigned k=0; k<1024; ++k) {
+                        float strip = k;
+
+                        unsigned ss = arbiter_ -> superstripLocal(moduleId, strip, segment);
+                        unsigned ss1024 = test_ss1024_nz1_tt27(moduleId, i, strip, segment);
+                        //std::cout << moduleId << " " << i << " " << strip << " " << segment << std::endl;
+
+                        CPPUNIT_ASSERT_EQUAL(ss1024, ss);
+                    }
+                }
+                ++i;
+            }
+        }
     }
 
-    void testHashModule() {
-        std::map<unsigned, unsigned>  hashModuleMap;
-        for (auto& v: values_)
-            hashModuleMap[hasher_->hashModule(v)] = v;
-        CPPUNIT_ASSERT_EQUAL(values_.size(), hashModuleMap.size());
+    void testArbiterProjective() {
+        static const float edges_phi[6*2] = {0.564430,1.791765,0.653554,1.710419,0.641981,1.756567,0.717273,1.638922,0.658179,1.673851,0.618448,1.778293};
+        static const float edges_z[6*2] = {-6.7127,26.9799,-6.7797,36.7048,-5.2542,47.7511,-9.5318,59.4103,-9.5318,78.7372,-9.5318,88.9935};
 
-        //for (auto& it: hashModuleMap)
-        //    printf("%8u --> %8u\n", it.second, it.first);
+        if (true) {
+            TString ss = "nx200_nz1";
+            arbiter_ -> setDefinition(ss, tt_, ttmap_);
+            arbiter_ -> print();
 
-        CPPUNIT_ASSERT_EQUAL(    0U, hasher_->hashModule( 50000));
-        CPPUNIT_ASSERT_EQUAL( 1000U, hasher_->hashModule( 50862));
-        CPPUNIT_ASSERT_EQUAL( 2000U, hasher_->hashModule( 60841));
-        CPPUNIT_ASSERT_EQUAL( 3000U, hasher_->hashModule( 72619));
-        CPPUNIT_ASSERT_EQUAL( 4000U, hasher_->hashModule( 70649));
-        CPPUNIT_ASSERT_EQUAL( 6000U, hasher_->hashModule( 90211));
-        CPPUNIT_ASSERT_EQUAL( 8000U, hasher_->hashModule(105615));
-        CPPUNIT_ASSERT_EQUAL(10000U, hasher_->hashModule(130012));
-        CPPUNIT_ASSERT_EQUAL(12000U, hasher_->hashModule(151452));
-        CPPUNIT_ASSERT_EQUAL(14000U, hasher_->hashModule(201412));
-        CPPUNIT_ASSERT_EQUAL(15427U, hasher_->hashModule(221479));
+            for (unsigned i=0; i<6; ++i) {
+                unsigned moduleId = (5+i) * 10000;
+                float r = 20.;  // dummy
+                float ds = 0.;  // dummy
+
+                for (unsigned j=0; j<101; ++j) {
+                    float phi = edges_phi[i*2] + (edges_phi[i*2+1] - edges_phi[i*2]) / 100. * j;
+
+                    for (unsigned k=0; k<101; ++k) {
+                        float z = edges_z[i*2] + (edges_z[i*2+1] - edges_z[i*2]) / 100 * k;
+
+                        unsigned ss = arbiter_ -> superstripGlobal(moduleId, r, phi, z, ds);
+                        unsigned ss200 = superstrip_projective(i, phi, z, M_PI / 4. / 200., 1.);
+                        //std::cout << moduleId << " " << r << " " << phi << " " << z << " " << ds << std::endl;
+
+                        CPPUNIT_ASSERT_EQUAL(ss200, ss);
+                    }
+                }
+            }
+        }
+
+        if (true) {
+            TString ss = "nx400_nz2";
+            arbiter_ -> setDefinition(ss, tt_, ttmap_);
+            arbiter_ -> print();
+
+            for (unsigned i=0; i<6; ++i) {
+                unsigned moduleId = (5+i) * 10000;
+                float r = 20.;  // dummy
+                float ds = 0.;  // dummy
+
+                for (unsigned j=0; j<101; ++j) {
+                    float phi = edges_phi[i*2] + (edges_phi[i*2+1] - edges_phi[i*2]) / 100. * j;
+
+                    for (unsigned k=0; k<101; ++k) {
+                        float z = edges_z[i*2] + (edges_z[i*2+1] - edges_z[i*2]) / 100 * k;
+
+                        unsigned ss = arbiter_ -> superstripGlobal(moduleId, r, phi, z, ds);
+                        unsigned ss400 = superstrip_projective(i, phi, z, M_PI / 4. / 400., 2.);
+                        //std::cout << moduleId << " " << r << " " << phi << " " << z << " " << ds << std::endl;
+
+                        CPPUNIT_ASSERT_EQUAL(ss400, ss);
+                    }
+                }
+            }
+        }
     }
 
-    void testHash() {
-        CPPUNIT_ASSERT_EQUAL( 32103U, hasher_->hash( 827900423));
-        CPPUNIT_ASSERT_EQUAL(106512U, hasher_->hash( 996589584));
-        CPPUNIT_ASSERT_EQUAL(210627U, hasher_->hash(1165361155));
-        CPPUNIT_ASSERT_EQUAL(307494U, hasher_->hash(1337147910));
-        CPPUNIT_ASSERT_EQUAL(397154U, hasher_->hash(1509196290));
-        CPPUNIT_ASSERT_EQUAL(505306U, hasher_->hash(1682866202));
-        CPPUNIT_ASSERT_EQUAL(987393U, hasher_->hash(fakeSuperstripId_));
-        CPPUNIT_ASSERT_EQUAL(987392U, hasher_->hash(fakeSuperstripId1_));
-        CPPUNIT_ASSERT_EQUAL(987393U, hasher_->hash(fakeSuperstripId2_));
-    }
+    void testArbiterFountain() {
+        static const float edges_phi[6*2] = {0.564430,1.791765,0.653554,1.710419,0.641981,1.756567,0.717273,1.638922,0.658179,1.673851,0.618448,1.778293};
+        static const float edges_z[6*2] = {-6.7127,26.9799,-6.7797,36.7048,-5.2542,47.7511,-9.5318,59.4103,-9.5318,78.7372,-9.5318,88.9935};
 
-    void testStitch() {
-        std::vector<addr_type> input;
-        std::vector<pattern_type> output;
+        if (true) {
+            TString ss = "sf1_nz1";
+            arbiter_ -> setDefinition(ss, tt_, ttmap_);
+            arbiter_ -> print();
 
-        output.clear(); output.resize(1);
-        input     =  {11, 22, 33};
-        output[0] = {{11, 22, 33, fakeSuperstripId_, fakeSuperstripId1_, fakeSuperstripId2_}};  // can use single brace pair only in GCC 4.8
-        CPPUNIT_ASSERT(output == stitcher_->stitch(input));
+            for (unsigned i=0; i<6; ++i) {
+                unsigned moduleId = (5+i) * 10000;
+                float r = 20.;  // dummy
+                float ds = 0.;  // dummy
 
-        output.clear(); output.resize(1);
-        input     =  {11, 22, 33, 44};
-        output[0] = {{11, 22, 33, 44, fakeSuperstripId_, fakeSuperstripId1_}};
-        CPPUNIT_ASSERT(output == stitcher_->stitch(input));
+                for (unsigned j=0; j<101; ++j) {
+                    float phi = edges_phi[i*2] + (edges_phi[i*2+1] - edges_phi[i*2]) / 100. * j;
 
-        output.clear(); output.resize(1);
-        input     =  {11, 22, 33, 44, 55};
-        output[0] = {{11, 22, 33, 44, 55, fakeSuperstripId_}};
-        CPPUNIT_ASSERT(output == stitcher_->stitch(input));
+                    for (unsigned k=0; k<101; ++k) {
+                        float z = edges_z[i*2] + (edges_z[i*2+1] - edges_z[i*2]) / 100 * k;
 
-        output.clear(); output.resize(1);
-        input     =  {11, 22, 33, 44, 55, 66};
-        output[0] = {{11, 22, 33, 44, 55, 66}};
-        CPPUNIT_ASSERT(output == stitcher_->stitch(input));
+                        unsigned ss = arbiter_ -> superstripGlobal(moduleId, r, phi, z, ds);
+                        unsigned ss1 = superstrip_fountain(i, phi, z, 1., 1.);
+                        //std::cout << moduleId << " " << r << " " << phi << " " << z << " " << ds << std::endl;
 
-        input     = {11, 22, 33, 44, 55, 66, 77};
-        output    = combinations(input, 6);
-        CPPUNIT_ASSERT(output == stitcher_->stitch(input));
-
-        input      = {11, 22, 33, 44, 55, 66, 77, 88};
-        output    = combinations(input, 6);
-        CPPUNIT_ASSERT(output == stitcher_->stitch(input));
+                        CPPUNIT_ASSERT_EQUAL(ss1, ss);
+                    }
+                }
+            }
+        }
     }
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TestSuperstripOperations);
-*/

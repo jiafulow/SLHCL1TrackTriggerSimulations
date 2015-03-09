@@ -1,7 +1,6 @@
 #ifndef AMSimulationIO_CSVFileReader_h_
 #define AMSimulationIO_CSVFileReader_h_
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/Helper.h"
 
 namespace slhcl1tt {
@@ -13,11 +12,9 @@ class CSVFileReader {
     CSVFileReader(int verbose=1);
     ~CSVFileReader();
 
-    int getTriggerTowerMap(TString src,
-                           std::map<unsigned, std::vector<unsigned> >& ttmap);
-
-    int getModuleCoordinateMap(TString src,
-                               std::map<unsigned, ModuleCoordinate>& coordmap);
+    int getTriggerTowerMap(TString src, unsigned tt,
+                           std::map<unsigned, std::vector<unsigned> >& ttmap,
+                           std::map<unsigned, std::vector<unsigned> >& ttrmap);
 
   protected:
     const int verbose_;

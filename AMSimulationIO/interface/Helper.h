@@ -8,11 +8,13 @@
 #include <iterator>
 #include <map>
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "TROOT.h"  // for gROOT
-class TTree;
+#include "TString.h"
+#include "TTree.h"
+
 
 namespace slhcl1tt {
 

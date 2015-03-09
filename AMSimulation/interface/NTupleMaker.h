@@ -15,12 +15,14 @@ class NTupleMaker {
   public:
     // NOTE: STRING is not implemented
     enum LeafType {
-        CHAR_T=1, UCHAR_T  , SHORT_T  , USHORT_T  , INT_T  , UINT_T ,
-        FLOAT_T , DOUBLE_T , LONG64_T , ULONG64_T , BOOL_T ,
-        CHAR_V  , UCHAR_V  , SHORT_V  , USHORT_V  , INT_V  , UINT_V ,
-        FLOAT_V , DOUBLE_V , LONG64_V , ULONG64_V , BOOL_V ,
-        CHAR_VV , UCHAR_VV , SHORT_VV , USHORT_VV , INT_VV , UINT_VV,
-        FLOAT_VV, DOUBLE_VV, LONG64_VV, ULONG64_VV, BOOL_VV,
+        CHAR_T=1 , UCHAR_T   , SHORT_T   , USHORT_T   , INT_T   , UINT_T  ,
+        FLOAT_T  , DOUBLE_T  , LONG64_T  , ULONG64_T  , BOOL_T  ,
+        CHAR_V   , UCHAR_V   , SHORT_V   , USHORT_V   , INT_V   , UINT_V  ,
+        FLOAT_V  , DOUBLE_V  , LONG64_V  , ULONG64_V  , BOOL_V  ,
+        CHAR_VV  , UCHAR_VV  , SHORT_VV  , USHORT_VV  , INT_VV  , UINT_VV ,
+        FLOAT_VV , DOUBLE_VV , LONG64_VV , ULONG64_VV , BOOL_VV ,
+        CHAR_VVV , UCHAR_VVV , SHORT_VVV , USHORT_VVV , INT_VVV , UINT_VVV,
+        FLOAT_VVV, DOUBLE_VVV, LONG64_VVV, ULONG64_VVV, BOOL_VVV,
         STRING,
         NumLeafTypes
     };

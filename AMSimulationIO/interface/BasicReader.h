@@ -21,6 +21,8 @@ class BasicReader {
 
     int init(TString src, bool full=true);
 
+    void nullStubs(const std::vector<bool>& nulling);
+
     Long64_t loadTree(Long64_t entry) { return tchain->LoadTree(entry); }
 
     Int_t getEntry(Long64_t entry) { return tchain->GetEntry(entry); }
@@ -45,8 +47,8 @@ class BasicReader {
     std::vector<float> *          vb_phi;
     std::vector<float> *          vb_coordx;
     std::vector<float> *          vb_coordy;
-    std::vector<float> *          vb_roughPt;
     std::vector<float> *          vb_trigBend;
+    std::vector<float> *          vb_roughPt;
     std::vector<float> *          vb_clusWidth;
     std::vector<unsigned> *       vb_modId;
     std::vector<int> *            vb_tpId;

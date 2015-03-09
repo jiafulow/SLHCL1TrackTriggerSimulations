@@ -1,80 +1,84 @@
 #ifndef AMSimulation_SuperstripArbiter_h_
 #define AMSimulation_SuperstripArbiter_h_
 
-#include <vector>
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TriggerTowerMap.h"
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include <string>
+#include <vector>
+#include "TString.h"
+
 
 namespace slhcl1tt {
 
+enum SuperstripType {UNKNOWN, FIXEDWIDTH, PROJECTIVE, FOUNTAIN};
+
 class SuperstripArbiter {
   public:
-    // Constructors
-    // subladder, submodule sizes are expressed as if each module has
-    // 32 pixels and 1024 strips, regardless of PS or 2S modules
-    SuperstripArbiter(unsigned subladder, unsigned submodule)
-    : barrel_n_(6), endcap_n_(15),
-      barrel_subladder_sizes_(barrel_n_, subladder), barrel_submodule_sizes_(barrel_n_, submodule),
-      endcap_subladder_sizes_(endcap_n_, subladder), endcap_submodule_sizes_(endcap_n_, submodule) {
-        init();
-    }
-
-    SuperstripArbiter(const std::vector<unsigned>& b_subladders, const std::vector<unsigned>& b_submodules,
-                      const std::vector<unsigned>& e_subladders, const std::vector<unsigned>& e_submodules)
-    : barrel_n_(6), endcap_n_(15),
-      barrel_subladder_sizes_(b_subladders), barrel_submodule_sizes_(b_submodules),
-      endcap_subladder_sizes_(e_subladders), endcap_submodule_sizes_(e_submodules) {
-        init();
-    }
+    // Constructor
+    SuperstripArbiter();
 
     // Destructor
     ~SuperstripArbiter() {}
 
-
     // Operators
-    // Return the superstrip address given the strip address
-    unsigned superstrip(unsigned lay, unsigned lad, unsigned mod,
-                        unsigned col, unsigned row,
-                        const bool isHalfStrip=true) const;
+    unsigned superstripLocal(unsigned moduleId, float strip, float segment) const;
+    unsigned superstripGlobal(unsigned moduleId, float r, float phi, float z, float ds) const;
 
-    unsigned module(unsigned lay, unsigned lad, unsigned mod) const;
+    // Functions
+    void setDefinition(TString definition, unsigned tt, const TriggerTowerMap* ttmap);
 
-    unsigned superstrip_luciano(unsigned lay, float phi, float eta,
-                                const float unit_phi, const float unit_eta) const;
+    unsigned nsuperstripsPerLayer() const { return nsuperstripsPerLayer_; }
+
+    bool useGlobalCoord() const { return useGlobalCoord_; }
 
     // Debug
     void print();
 
-  private:
-    // Initialize
-    void init();
 
   private:
+    // Member functions
+    unsigned compressModuleId(unsigned moduleId) const;
+
+    unsigned superstripFixedwidth(unsigned moduleId, float strip, float segment) const;
+    unsigned superstripProjective(unsigned moduleId, float r, float phi, float z, float ds) const;
+    unsigned superstripFountain(unsigned moduleId, float r, float phi, float z, float ds) const;
+
     // Member data
-    const unsigned barrel_n_;  // = 6 layers
-    const unsigned endcap_n_;  // = 15 rings
+    SuperstripType     sstype_;
+    unsigned           nsuperstripsPerLayer_;
+    bool               useGlobalCoord_;
 
-    // Variable size
-    std::vector<unsigned> barrel_subladder_sizes_;
-    std::vector<unsigned> barrel_submodule_sizes_;
-    std::vector<unsigned> endcap_subladder_sizes_;
-    std::vector<unsigned> endcap_submodule_sizes_;
+    unsigned           fixedwidth_nstrips_;
+    unsigned           fixedwidth_nz_;
+    unsigned           fixedwidth_bit_lshift1_;
+    unsigned           fixedwidth_bit_lshift2_;
+    unsigned           fixedwidth_bit_rshift1_;
+    unsigned           fixedwidth_bit_rshift2_;
+    unsigned           projective_nx_;
+    unsigned           projective_nz_;
+    std::vector<float> projective_phiBins_;
+    std::vector<float> projective_zBins_;
+    float              fountain_sf_;
+    unsigned           fountain_nz_;
+    unsigned           fountain_max_nx_;
+    std::vector<float> fountain_phiBins_;
+    std::vector<float> fountain_zBins_;
 
-    // Compress using geometry knowledge
-    std::vector<unsigned> barrel_z_divisions_;
-    std::vector<unsigned> barrel_phi_divisions_;
-    std::vector<unsigned> barrel_layer_offsets_;
-    std::vector<unsigned> endcap_ring_divisions_;
-    std::vector<unsigned> endcap_ring_offsets_;
-    std::vector<unsigned> calo_offsets_;
-    std::vector<unsigned> muon_offsets_;
-    std::vector<unsigned> fake_offsets_;
+    // Trigger tower geometry
+    // modules_[i][j] is the module ID of the i-th layer, j-th module
+    std::vector<std::vector<unsigned> > towerModules_;
 
-    // Number of bits allocated
-    unsigned max_subladder_bits_;
-    unsigned max_submodule_bits_;
+    // phiMins_[i] is the phiMin boundary of the i-th layer
+    // phiMaxs_[i] is the phiMax boundary of the i-th layer
+    // zMins_[i] is the zMin boundary of the i-th layer
+    // zMaxs_[i] is the zMax boundary of the i-th layer
+    std::vector<float> phiMins_;
+    std::vector<float> phiMaxs_;
+    std::vector<float> zMins_;
+    std::vector<float> zMaxs_;
+
+    // phiWidths[i] is the phiWidth of the i-th layer
+    std::vector<float> phiWidths_;
 };
 
 }  // namespace slhcl1tt

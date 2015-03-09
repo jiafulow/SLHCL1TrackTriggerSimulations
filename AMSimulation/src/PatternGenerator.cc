@@ -6,70 +6,69 @@
 
 static const unsigned MIN_NGOODSTUBS = 3;
 static const unsigned MAX_NGOODSTUBS = 8;
-static const unsigned MAX_NTOWERS = 6 * 8;
-static const unsigned MAX_NMODULES = 15428;
-static const unsigned MAX_FREQUENCY = 0xffff;  // 65535
+static const unsigned MAX_FREQUENCY = 0xffffffff;  // unsigned
 
-
-// _____________________________________________________________________________
-// Parse the trigger tower csv file
-int PatternGenerator::readTriggerTowerFile(TString src) {
-    CSVFileReader csvreader(verbose_);
-    if (csvreader.getTriggerTowerMap(src, triggerTowerMap_)) {
-        std::cout << Error() << "Failed to parse the trigger tower csv file." << std::endl;
-        return 1;
-    }
-
-    assert(triggerTowerMap_.size() == MAX_NTOWERS);
-
-    //for (auto it: triggerTowerMap_)
-    //    std::cout << "Tower " << it.first << " has " << it.second.size() << " modules." << std::endl;
-
-    // Reverse trigger tower map
-    triggerTowerReverseMap_.clear();
-    for (auto it: po.triggerTowers) { // loop over input trigger towers
-        const std::vector<unsigned>& moduleIds = triggerTowerMap_[it];
-        for (auto it2: moduleIds) {   // loop over the moduleIds in the tower
-            triggerTowerReverseMap_[it2].push_back(it);
-        }
-    }
-
-    //for (auto it: triggerTowerReverseMap_)
-    //    std::cout << "Module " << it.first << " is in " << it.second.size() << " towers." << std::endl;
-    return 0;
+namespace {
+// Comparator
+bool sortByFrequency(const std::pair<pattern_type, unsigned>& lhs, const std::pair<pattern_type, unsigned>& rhs) {
+    return lhs.second > rhs.second;
+}
 }
 
 
 // _____________________________________________________________________________
-// Parse the module coordinate csv file
-int PatternGenerator::readModuleCoordinateFile(TString src) {
-    CSVFileReader csvreader(verbose_);
-    if (csvreader.getModuleCoordinateMap(src, moduleCoordinateMap_)) {
-        std::cout << Error() << "Failed to parse the module coordinate csv file." << std::endl;
+int PatternGenerator::setupTriggerTower(TString datadir) {
+    TString csvfile1 = datadir + "trigger_sector_map.csv";
+    TString csvfile2 = datadir + "trigger_sector_boundaries.csv";
+
+    try {
+        ttmap_ -> readTriggerTowerMap(csvfile1);
+
+    } catch (const std::invalid_argument& e) {
+        std::cout << Error() << "Failed to parse: " << csvfile1 << ". What: " << e.what() << std::endl;
         return 1;
     }
 
-    assert(moduleCoordinateMap_.size() == MAX_NMODULES);
+    try {
+        ttmap_ -> readTriggerTowerBoundaries(csvfile2);
 
-    //for (auto it: moduleCoordinateMap_)
-    //    std::cout << "Module " << it.first << " coordinate: " << it.second.rho << "," << it.second.eta << "," << it.second.phi << std::endl;
+    } catch (const std::invalid_argument& e) {
+        std::cout << Error() << "Failed to parse: " << csvfile2 << ". What: " << e.what() << std::endl;
+        return 1;
+    }
+
+    //ttmap_ -> print();
     return 0;
 }
 
+// _____________________________________________________________________________
+int PatternGenerator::setupSuperstrip() {
+    try {
+        arbiter_ -> setDefinition(po_.superstrip, po_.tower, ttmap_);
+
+    } catch (const std::invalid_argument& e) {
+        std::cout << Error() << "Failed to set definition: " << po_.superstrip << ". What: " << e.what() << std::endl;
+        return 1;
+    }
+
+    //arbiter_ -> print();
+    return 0;
+}
 
 // _____________________________________________________________________________
 // Make the patterns
-int PatternGenerator::makePatterns_fas(TString src) {
+int PatternGenerator::makePatterns(TString src) {
     if (verbose_)  std::cout << Info() << "Reading " << nEvents_ << " events and generating patterns." << std::endl;
 
     // _________________________________________________________________________
-    // For reading events
+    // For reading
     TTStubReader reader(verbose_);
     if (reader.init(src, false)) {
         std::cout << Error() << "Failed to initialize TTStubReader." << std::endl;
         return 1;
 
     } else {
+        // Only read certain branches
         TChain* tchain = reader.getChain();
         tchain->SetBranchStatus("*"                 , 0);
         tchain->SetBranchStatus("genParts_pt"       , 1);
@@ -81,63 +80,50 @@ int PatternGenerator::makePatterns_fas(TString src) {
       //tchain->SetBranchStatus("genParts_charge"   , 1);
       //tchain->SetBranchStatus("TTStubs_x"         , 1);
       //tchain->SetBranchStatus("TTStubs_y"         , 1);
-      //tchain->SetBranchStatus("TTStubs_z"         , 1);
+        tchain->SetBranchStatus("TTStubs_z"         , 1);
         tchain->SetBranchStatus("TTStubs_r"         , 1);
-        tchain->SetBranchStatus("TTStubs_eta"       , 1);
+      //tchain->SetBranchStatus("TTStubs_eta"       , 1);
         tchain->SetBranchStatus("TTStubs_phi"       , 1);
         tchain->SetBranchStatus("TTStubs_coordx"    , 1);
         tchain->SetBranchStatus("TTStubs_coordy"    , 1);
+        tchain->SetBranchStatus("TTStubs_trigBend"  , 1);
       //tchain->SetBranchStatus("TTStubs_roughPt"   , 1);
-      //tchain->SetBranchStatus("TTStubs_trigBend"  , 1);
       //tchain->SetBranchStatus("TTStubs_clusWidth" , 1);
         tchain->SetBranchStatus("TTStubs_modId"     , 1);
       //tchain->SetBranchStatus("TTStubs_tpId"      , 1);
     }
 
-    id_type caloSuperstrip, muonSuperstrip, fakeSuperstrip;
-    if (po.mode == 2) {  // luciano superstrip
-        caloSuperstrip = arbiter_ -> superstrip_luciano(25, 0, 0, po.unitPhi, po.unitEta);
-        muonSuperstrip = arbiter_ -> superstrip_luciano(26, 0, 0, po.unitPhi, po.unitEta);
-        fakeSuperstrip = arbiter_ -> superstrip_luciano(27, 0, 0, po.unitPhi, po.unitEta);
-    } else {
-        caloSuperstrip = arbiter_ -> superstrip(25, 0, 0, 0, 0);
-        muonSuperstrip = arbiter_ -> superstrip(26, 0, 0, 0, 0);
-        fakeSuperstrip = arbiter_ -> superstrip(27, 0, 0, 0, 0);
-    }
-
-    // Allocate memory
-    allPatterns_fas_.init(0);  // automatic memory allocation
-    if (verbose_>2)  std::cout << Debug() << "Initialized allPatterns_fas_." << std::endl;
+    // _________________________________________________________________________
+    // Get trigger tower reverse map
+    const std::map<unsigned, bool>& ttrmap = ttmap_ -> getTriggerTowerReverseMap(po_.tower);
 
 
     // _________________________________________________________________________
     // Loop over all events
 
-    // Containers
-    std::vector<id_type> stubLayers;
+    patternBank_map_.clear();
     pattern_type patt;
-    pattern_type pattEmpty;  // for sanity check
-
-    std::map<unsigned, unsigned> towerCountMap;
+    patt.fill(0);
 
     // Bookkeepers
-    float bankSize_f = 0., bankOldSize_f = 0., nKept_f = 0., nKeptOld_f = 0.;
-    int nRead = 0, nKept = 0;
+    float coverage = 0.;
+    long int bankSize = 0, bankSizeOld = -100000, nKeptOld = -100000;
+    long int nRead = 0, nKept = 0;
 
     for (long long ievt=0; ievt<nEvents_; ++ievt) {
         if (reader.loadTree(ievt) < 0)  break;
         reader.getEntry(ievt);
 
+        // Running estimate of coverage
         const unsigned nstubs = reader.vb_modId->size();
         if (verbose_>1 && ievt%100000==0) {
-            // Coverage info
-            bankSize_f = allPatterns_fas_.size();
-            nKept_f = nKept;
-            coverage_ = 1. - (bankSize_f - bankOldSize_f) / (nKept_f - nKeptOld_f);
-            std::cout << Debug() << Form("... Processing event: %7lld, keeping: %7i, # patterns: %7.0f, coverage: %7.5f", ievt, nKept, bankSize_f, coverage_) << std::endl;
+            bankSize = patternBank_map_.size();
+            coverage = 1.0 - float(bankSize - bankSizeOld) / float(nKept - nKeptOld);
 
-            bankOldSize_f = bankSize_f;
-            nKeptOld_f = nKept_f;
+            std::cout << Debug() << Form("... Processing event: %7lld, keeping: %7ld, # patterns: %7ld, coverage: %7.5f", ievt, nKept, bankSize, coverage) << std::endl;
+
+            bankSizeOld = bankSize;
+            nKeptOld = nKept;
         }
 
         if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " # stubs: " << nstubs << std::endl;
@@ -152,171 +138,108 @@ int PatternGenerator::makePatterns_fas(TString src) {
             return 1;
         }
 
+        // Apply track pt requirement
         float simPt = reader.vp_pt->front();
-        if (simPt < po.minPt || po.maxPt < simPt) {
+        if (simPt < po_.minPt || po_.maxPt < simPt) {
             ++nRead;
             continue;
         }
 
+        // Apply trigger tower acceptance
+        unsigned ngoodstubs = 0;
+        for (unsigned istub=0; istub<nstubs; ++istub) {
+            unsigned moduleId = reader.vb_modId   ->at(istub);
+            if (ttrmap.find(moduleId) != ttrmap.end()) {
+                ++ngoodstubs;
+            }
+        }
+        if (ngoodstubs != po_.nLayers) {
+            ++nRead;
+            continue;
+        }
+        assert(nstubs == po_.nLayers);
+
+
         // _____________________________________________________________________
         // Start generating patterns
-        bool keep = true;
-
-        stubLayers.clear();
         patt.fill(0);
-        patt.at(6) = caloSuperstrip;  // dummy for now
-        patt.at(7) = muonSuperstrip;  // dummy for now
-
-        // Quick loop over reconstructed stubs
-        id_type ssId, moduleId, lay, lad, mod, col, row;  // declare the usual suspects
-        float stub_r, stub_eta, stub_phi;
-        for (unsigned l=0; (l<nstubs) && keep; ++l) {
-            moduleId = reader.vb_modId->at(l);
-
-            // Skip if moduleId not in any trigger tower
-            if (po.requireTriggerTower && triggerTowerReverseMap_.find(moduleId) == triggerTowerReverseMap_.end()) {
-                if (verbose_>2)  std::cout << Debug() << "... ... skip moduleId: " << moduleId << " not in any trigger tower." << std::endl;
-                continue;
-            }
-
-            lay = decodeLayer(moduleId);
-            const unsigned& count = std::count(stubLayers.begin(), stubLayers.end(), lay);
-            if (count != 0) {
-                std::cout << Error() << "There should be only one stub in any layer" << std::endl;
-                return 1;
-            }
-            stubLayers.push_back(lay);
-        }
-
-        // Decide how to lay out the pattern
-        //const std::vector<unsigned>& indices = stitcher_ -> stitch(stubLayers);
-        const std::vector<unsigned>& indices = stitcher_ -> stitch_layermap(stubLayers);
-
-        if (indices.empty())
-            keep = false;
-
-        if (verbose_>2) {
-            std::cout << Debug() << "... evt: " << ievt << " layers: ";
-            std::copy(stubLayers.begin(), stubLayers.end(), std::ostream_iterator<unsigned>(std::cout, " "));
-            std::cout << "  indices: ";
-            std::copy(indices.begin(), indices.end(), std::ostream_iterator<unsigned>(std::cout, " "));
-            std::cout << std::endl;
-        }
-        assert(!keep || indices.size() == nLayers_);
-
-        // _____________________________________________________________________
-        // Encode superstrip id
-        towerCountMap.clear();  // count trigger towers for all superstrips
 
         // Loop over reconstructed stubs
-        for (unsigned k=0, l=0; (k<nLayers_) && keep; ++k) {
-            // Fake superstrip
-            if (indices.at(k) == 999999) {
-                // Arbitrarily put fake superstrip in layer 27
-                patt.at(k) = fakeSuperstrip;
-                continue;
+        for (unsigned istub=0; istub<nstubs; ++istub) {
+            unsigned moduleId = reader.vb_modId   ->at(istub);
+            float    strip    = reader.vb_coordx  ->at(istub);  // in full-strip unit
+            float    segment  = reader.vb_coordy  ->at(istub);  // in full-strip unit
+
+            float    stub_r   = reader.vb_r       ->at(istub);
+            float    stub_phi = reader.vb_phi     ->at(istub);
+            float    stub_z   = reader.vb_z       ->at(istub);
+            float    stub_ds  = reader.vb_trigBend->at(istub);  // in full-strip unit
+
+            // Find superstrip ID
+            unsigned ssId = 0;
+            if (!arbiter_ -> useGlobalCoord()) {  // local coordinates
+                ssId = arbiter_ -> superstripLocal(moduleId, strip, segment);
+
+            } else {                              // global coordinates
+                ssId = arbiter_ -> superstripGlobal(moduleId, stub_r, stub_phi, stub_z, stub_ds);
             }
-
-            // Real superstrip (tracker only)
-            assert(k < nstubs && indices.at(k) < nstubs);
-            l = indices.at(k);
-
-            // Break moduleId into lay, lad, mod
-            moduleId = reader.vb_modId->at(l);
-            lay = decodeLayer(moduleId);
-            lad = decodeLadder(moduleId);
-            mod = decodeModule(moduleId);
-
-            // col <-- coordy, row <-- coordx
-            // use half-strip unit
-            col = halfStripRound(reader.vb_coordy->at(l));
-            row = halfStripRound(reader.vb_coordx->at(l));
-
-            // global r, eta, phi
-            stub_r = reader.vb_r->at(l);
-            stub_eta = reader.vb_eta->at(l);
-            stub_phi = reader.vb_phi->at(l);
-
-            // Find superstrip address
-            if (po.mode == 2) {  // luciano superstrip
-                ssId = arbiter_ -> superstrip_luciano(lay, stub_phi, stub_eta, po.unitPhi, po.unitEta);
-            } else {
-                ssId = arbiter_ -> superstrip(lay, lad, mod, col, row);
-            }
-            patt.at(k) = ssId;
-
-            // Find associated trigger towers
-            if (po.requireTriggerTower) {
-                const std::vector<unsigned>& towerIds = triggerTowerReverseMap_.at(moduleId);
-                for (unsigned i=0; i<towerIds.size(); ++i) {
-                    ++towerCountMap[towerIds.at(i)];
-                }
-                ++towerCountMap[999999];  // total count
-            }
+            patt.at(istub) = ssId;
 
             if (verbose_>2) {
-                std::cout << Debug() << "... ... stub: " << l << " moduleId: " << moduleId << " col: " << col << " row: " << row << " r: " << stub_r << " eta: " << stub_eta << " phi: " << stub_phi << std::endl;
-                std::cout << Debug() << "... ... stub: " << l << " ssId: " << ssId << " towers: ";
-                if (po.requireTriggerTower) {
-                    const std::vector<unsigned>& towerIds = triggerTowerReverseMap_.at(moduleId);
-                    std::copy(towerIds.begin(), towerIds.end(), std::ostream_iterator<unsigned>(std::cout, " "));
-                }
-                std::cout << std::endl;
+                std::cout << Debug() << "... ... stub: " << istub << " moduleId: " << moduleId << " strip: " << strip << " segment: " << segment << " r: " << stub_r << " phi: " << stub_phi << " z: " << stub_z << " ds: " << stub_ds << std::endl;
+                std::cout << Debug() << "... ... stub: " << istub << " ssId: " << ssId << std::endl;
             }
         }
 
-        if (keep && po.requireTriggerTower) {
-            // Drop patterns that are not within any trigger tower
-            std::map<unsigned, unsigned>::const_iterator ittower;
-            const unsigned totalTowerCount = towerCountMap.at(999999);
-            towerCountMap.erase(999999);
+        // Insert pattern into the bank
+        ++patternBank_map_[patt];
 
-            unsigned highestTowerCount = 0;
-            for (ittower = towerCountMap.begin(); ittower != towerCountMap.end(); ++ittower) {
-                if (highestTowerCount < ittower->second)
-                    highestTowerCount = ittower->second;
-            }
+        if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " patt: " << patt << std::endl;
 
-            keep = (highestTowerCount == totalTowerCount);
-            if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " highestTowerCount: " << highestTowerCount << " totalTowerCount: " << totalTowerCount << std::endl;
-        }
-
-        assert (!keep || patt != pattEmpty);
-
-        // _____________________________________________________________________
-        // Insert pattern
-        if (keep) {
-            allPatterns_fas_.insert(patt.data(), patt.data() + patt.size());
-            //allPatterns_fas_.insert_nosort(patt.data(), patt.data() + patt.size());
-            ++nKept;
-
-            if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " patt: " << patt << std::endl;
-        }
+        ++nKept;
         ++nRead;
     }
-    if (verbose_)  std::cout << Info() << Form("Read: %7i, kept: %7i, # patterns: %7u, coverage: %7.5f", nRead, nKept, allPatterns_fas_.size(), coverage_) << std::endl;
 
-    // Keep this number to calculate sorted coverage
+    if (verbose_)  std::cout << Info() << Form("Read: %7ld, kept: %7ld, # patterns: %7lu, coverage: %7.5f", nRead, nKept, patternBank_map_.size(), coverage) << std::endl;
+
+    // Save these numbers
+    coverage_       = coverage;
     coverage_count_ = nKept;
+
 
     // _________________________________________________________________________
     // Sort by frequency
 
-    allPatterns_fas_.sort();
-    //assert(allPatterns_fas_.at(0).count <= MAX_FREQUENCY);
+    // Convert map to vector of pairs
+    const unsigned origSize = patternBank_map_.size();
+    //patternBank_pairs_.reserve(patternBank_map_.size());  // can cause bad_alloc
+    //patternBank_pairs_.insert(patternBank_pairs_.end(), patternBank_map_.begin(), patternBank_map_.end());
+
+    for (std::map<pattern_type, unsigned>::const_iterator it = patternBank_map_.begin();
+         it != patternBank_map_.end(); ) {  // should not cause bad_alloc
+        patternBank_pairs_.push_back(*it);
+        it = patternBank_map_.erase(it);
+    }
+    assert(patternBank_pairs_.size() == origSize);
+
+    // Clear map and release memory
+    std::map<pattern_type, unsigned> mapEmpty;
+    patternBank_map_.clear();
+    patternBank_map_.swap(mapEmpty);
+
+    // Sort by frequency
+    std::stable_sort(patternBank_pairs_.begin(), patternBank_pairs_.end(), sortByFrequency);
 
     if (verbose_>2) {
-        for (unsigned i=0; i<allPatterns_fas_.size(); ++i) {
-            const fas::lean_table3::return_type& ret = allPatterns_fas_.at(i);
-            std::cout << Debug() << "... patt: " << i << "  ";
-            std::copy(ret.begin, ret.end, std::ostream_iterator<id_type>(std::cout, " "));
-            std::cout << " freq: " << ret.count << std::endl;
+        for (unsigned i=0; i<patternBank_pairs_.size(); ++i) {
+            const auto& pair = patternBank_pairs_.at(i);
+            std::cout << Debug() << "... patt: " << i << "  " << pair.first << " freq: " << pair.second << std::endl;
         }
     }
 
-    unsigned highest_freq = allPatterns_fas_.size() ? allPatterns_fas_.at(0).count : 0;
-    if (verbose_)  std::cout << Info() << "Generated " << allPatterns_fas_.size() << " patterns, highest freq: " << highest_freq << std::endl;
-    if (highest_freq > 63000)  std::cout << Warning() << "Frequency (16-bit unsigned integer) could be overflow" << std::endl;
+    unsigned highest_freq = patternBank_pairs_.size() ? patternBank_pairs_.front().second : 0;
+    if (verbose_)  std::cout << Info() << "Generated " << patternBank_pairs_.size() << " patterns, highest freq: " << highest_freq << std::endl;
+    assert(patternBank_pairs_.front().second <= MAX_FREQUENCY);
 
     return 0;
 }
@@ -324,7 +247,7 @@ int PatternGenerator::makePatterns_fas(TString src) {
 
 // _____________________________________________________________________________
 // Output patterns into a TTree
-int PatternGenerator::writePatterns_fas(TString out) {
+int PatternGenerator::writePatterns(TString out) {
 
     // _________________________________________________________________________
     // For writing
@@ -335,59 +258,62 @@ int PatternGenerator::writePatterns_fas(TString out) {
     }
 
     // _________________________________________________________________________
-    // Save trigger tower maps
-    writer.pb_ttmap = &triggerTowerMap_;
-    writer.pb_ttrmap = &triggerTowerReverseMap_;
-    writer.fillTriggerTowerMaps();
-
-    // _________________________________________________________________________
     // Save pattern bank statistics
-    *(writer.pb_coverage) = coverage_;
-    *(writer.pb_count) = coverage_count_;
-    writer.fillPatternBankStats();
+    *(writer.pb_coverage)   = coverage_;
+    *(writer.pb_count)      = coverage_count_;
+    *(writer.pb_tower)      = po_.tower;
+    *(writer.pb_superstrip) = po_.superstrip;
+    writer.fillPatternBankInfo();
 
     // _________________________________________________________________________
     // Save pattern bank
-    const long long nentries = allPatterns_fas_.size();
+    const long long npatterns = patternBank_pairs_.size();
 
-    unsigned integralFreq = 0;
-    count_type freq = MAX_FREQUENCY, oldFreq = MAX_FREQUENCY;
+    // Bookkeepers
+    unsigned nKept = 0;
+    unsigned freq = MAX_FREQUENCY, oldFreq = MAX_FREQUENCY;
+    int n90=0, n95=0, n99=0;
 
-    for (long long ievt=0; ievt<nentries; ++ievt) {
-        if (verbose_>1 && ievt%10000==0) {
-            float coverage = float(integralFreq) / coverage_count_ * coverage_;
-            std::cout << Debug() << Form("... Writing event: %7lld, sorted coverage: %7.5f", ievt, coverage) << std::endl;
+    for (long long ipatt=0; ipatt<npatterns; ++ipatt) {
+        if (verbose_>1 && ipatt%100==0) {
+            float coverage = float(nKept) / coverage_count_ * coverage_;
+            if (coverage < 0.90 + 1e-5)
+                n90 = ipatt;
+            else if (coverage < 0.95 + 1e-5)
+                n95 = ipatt;
+            else if (coverage < 0.99 + 1e-5)
+                n99 = ipatt;
+
+            std::cout << Debug() << Form("... Writing event: %7lld, sorted coverage: %7.5f", ipatt, coverage) << std::endl;
         }
 
-        const fas::lean_table3::return_type& ret = allPatterns_fas_.at(ievt);
-        freq = ret.count;
+        freq = patternBank_pairs_.at(ipatt).second;
 
-        // Make sure patterns are indeed sorted by frequency
+        // Check whether patterns are indeed sorted by frequency
         assert(oldFreq >= freq);
         oldFreq = freq;
-        integralFreq += freq;
+        nKept += freq;
 
-        if (freq < minFrequency_)  // cut off
+        if (freq < (unsigned) minFrequency_)  // cut off
             break;
 
-        *(writer.pb_frequency) = freq;
         writer.pb_superstripIds->clear();
-        for (id_type * it = ret.begin; it != ret.end; ++it) {
-            writer.pb_superstripIds->push_back(*it);
+        const pattern_type& patt = patternBank_pairs_.at(ipatt).first;
+        for (unsigned ilayer=0; ilayer<po_.nLayers; ++ilayer) {
+            writer.pb_superstripIds->push_back(patt.at(ilayer));
         }
+        *(writer.pb_frequency) = freq;
         writer.fillPatternBank();
     }
 
-    long long nentries2 = writer.writeTree();
-    assert(nentries == nentries2);
+    long long nentries = writer.writeTree();
+    assert(npatterns == nentries);
+    assert(coverage_count_ == nKept);
+
+    if (verbose_)  std::cout << Info() << "After sorting by frequency, N(90% cov)=" << n90 << ", N(95% cov)=" << n95 << ", N(99% cov)=" << n99 << std::endl;
 
     return 0;
 }
-
-
-// _____________________________________________________________________________
-// Private functions
-// none
 
 
 // _____________________________________________________________________________
@@ -396,35 +322,21 @@ int PatternGenerator::run(TString src, TString datadir, TString out) {
     int exitcode = 0;
     Timing(1);
 
-    exitcode = readTriggerTowerFile(datadir + "trigger_sector_map.csv");
+    exitcode = setupTriggerTower(datadir);
     if (exitcode)  return exitcode;
     Timing();
 
-    //exitcode = readModuleCoordinateFile(datadir + "module_coordinates.csv");
-    //if (exitcode)  return exitcode;
-    //Timing();
+    exitcode = setupSuperstrip();
+    if (exitcode)  return exitcode;
+    Timing();
 
-    bool use_fas = true;
-    if (use_fas) {
-        exitcode = makePatterns_fas(src);
-        if (exitcode)  return exitcode;
-        Timing();
+    exitcode = makePatterns(src);
+    if (exitcode)  return exitcode;
+    Timing();
 
-        exitcode = writePatterns_fas(out);
-        if (exitcode)  return exitcode;
-        Timing();
-
-    } else {
-        if (verbose_)  std::cout << Info() << "Switched off fas" << std::endl;
-
-        exitcode = makePatterns_map(src);
-        if (exitcode)  return exitcode;
-        Timing();
-
-        exitcode = writePatterns_map(out);
-        if (exitcode)  return exitcode;
-        Timing();
-    }
+    exitcode = writePatterns(out);
+    if (exitcode)  return exitcode;
+    Timing();
 
     return exitcode;
 }

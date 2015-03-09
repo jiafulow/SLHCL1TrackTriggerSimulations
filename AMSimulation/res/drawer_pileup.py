@@ -130,7 +130,7 @@ if sections["minbias"]:
                             tower = "ttavg"
 
                     if tower:
-                        histos[tower].Fill(pt, 1.0/48)
+                        histos[tower].Fill(pt, 1.0/nentries/48)
 
                     tower = ""
                     if primary and (pi/4. <= phi <= pi/2.):
@@ -142,7 +142,7 @@ if sections["minbias"]:
                             tower = "tt43"
 
                     if tower:
-                        histos[tower].Fill(pt)
+                        histos[tower].Fill(pt, 1.0/nentries)
 
             tree.SetBranchStatus("*", 0)
         return
@@ -155,7 +155,7 @@ if sections["minbias"]:
             h1 = histos1[tower]
             h2 = histos2[tower]
 
-            h1.SetStats(0); h1.SetMaximum(ymax * 7); h1.SetMinimum(0.5)
+            h1.SetStats(0); h1.SetMaximum(ymax * 7); h1.SetMinimum(0.001)
             h1.Draw("hist")
             h2.Draw("same hist")
             gPad.SetLogy(1)
@@ -292,7 +292,7 @@ if sections["rate_by_module"]:
         donotdelete = []
         return donotdelete
 
-    def drawModule1D(histos, imgdir, ytitle="stub rate per module"):
+    def drawModule1D(histos, imgdir, ytitle="# stubs/module/BX"):
         def modifyBarrel(h1):
             xlow, xup = -100, 100
             nbinsx = h1.GetNbinsX()

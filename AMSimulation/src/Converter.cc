@@ -3,7 +3,7 @@
 #include <bitset>
 #include <fstream>
 
-static const unsigned MAX_NLAYERS = 8;
+static const unsigned MAX_NLAYERS = 6;
 
 
 int Converter::bankToTxt(TString src, TString out, TString fmt) {
@@ -51,9 +51,7 @@ int Converter::bankToTxt(TString src, TString out, TString fmt) {
     // _________________________________________________________________________
     // Actual work starts here
     std::vector<unsigned>       * superstripIds = 0;
-    //std::vector<unsigned short> * superstripBits = 0;
     ttree->SetBranchAddress("superstripIds" , &superstripIds);
-    //ttree->SetBranchAddress("superstripBits", &superstripBits);
 
     for (long long ievt=skipEvents_; ievt<nEvents_; ++ievt) {
         ttree->GetEntry(ievt);
@@ -71,15 +69,7 @@ int Converter::bankToTxt(TString src, TString out, TString fmt) {
                 fout << (std::bitset<32>) superstripIds->at(l) << " ";
             }
         } else if (fmt == "s") {
-            unsigned ssId, moduleId, col, row;
-            for (unsigned l=0; l<MAX_NLAYERS; ++l) {
-                ssId = superstripIds->at(l);
-                moduleId = (ssId >> 10) & 0x3FFF;  // FIXME: obsolete
-                col      = (ssId >>  7) & 0x7;
-                row      = (ssId >>  0) & 0x7F;
-
-                fout << Form("(%6u,%2u,%4u)", moduleId, col, row) << " ";
-            }
+            std::cout << Error() << "NOT IMPLEMENTED" << std::endl;
         }
         fout << "\n";
     }

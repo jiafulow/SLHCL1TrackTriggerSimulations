@@ -54,8 +54,8 @@ class TTTrackWriter : public BasicWriter {
     std::auto_ptr<std::vector<float> >                  vt_chi2_phi;
     std::auto_ptr<std::vector<float> >                  vt_chi2_z;
     std::auto_ptr<std::vector<int> >                    vt_tpId;
+    std::auto_ptr<std::vector<unsigned> >               vt_tower;
     std::auto_ptr<std::vector<unsigned> >               vt_roadRef;
-    std::auto_ptr<std::vector<unsigned> >               vt_combRef;
     std::auto_ptr<std::vector<std::vector<unsigned> > > vt_stubRefs;
 };
 

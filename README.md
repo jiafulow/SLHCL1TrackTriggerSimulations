@@ -10,3 +10,5 @@ This software package contains three subpackages useful to perform L1 track trig
 - Configuration: for generating particle gun samples
 - NTupleTools: for flattening EDM ROOT files
 - AMSimulation: for simulation of associative-memory-based track finding 
+
+See [wiki](https://github.com/jiafulow/SLHCL1TrackTriggerSimulations/wiki) for more information.

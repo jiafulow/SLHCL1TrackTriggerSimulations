@@ -1,48 +1,30 @@
 #ifndef AMSimulation_PatternGenerator_h_
 #define AMSimulation_PatternGenerator_h_
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTPattern.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/Pattern.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PatternBankOption.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TriggerTowerMap.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/SuperstripArbiter.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/SuperstripStitcher.h"
 using namespace slhcl1tt;
 
-#include "fas/lean_table3.h"
-
-
-// SETTINGS: Superstrip size, # of fake superstrips, # of DC bits
-// INPUT   : TTree with moduleId, hitId, sim info + trigger tower file
-// OUTPUT  : Pattern bank
 
 class PatternGenerator {
   public:
     // Constructor
-    PatternGenerator(PatternBankOption option)
-    : po(option), nLayers_(po.nLayers), nDCBits_(po.nDCBits), nFakers_(po.nFakers),
-      nEvents_(999999999), minFrequency_(1),
-      verbose_(1),
-      allPatterns_fas_(0,0),
-      coverage_(0.), coverage_count_(0) {
+    PatternGenerator(PatternBankOption po)
+    : po_(po),
+      nEvents_(999999999), minFrequency_(1), verbose_(1) {
 
-        assert(3 <= nLayers_ && nLayers_ <= 8);
-        assert(nDCBits_ <= 4);
-        assert(nFakers_ <= 3);
-
-        // Decide on the size of superstrip
-        if (po.mode == 0)
-            arbiter_ = new SuperstripArbiter(po.subLadderSize, po.subModuleSize);
-        else
-            arbiter_ = new SuperstripArbiter(po.subLadderVarSize, po.subModuleVarSize, po.subLadderECVarSize, po.subModuleECVarSize);
-
-        // Build a pattern from a given list of superstrips
-        stitcher_ = new SuperstripStitcher(nLayers_, nFakers_);
+        // Initialize
+        ttmap_   = new TriggerTowerMap();
+        arbiter_ = new SuperstripArbiter();
     }
 
     // Destructor
     ~PatternGenerator() {
+        if (ttmap_)     delete ttmap_;
         if (arbiter_)   delete arbiter_;
-        if (stitcher_)  delete stitcher_;
     }
 
 
@@ -54,44 +36,37 @@ class PatternGenerator {
     // Getters
     // none
 
-    // Functions
-    int readTriggerTowerFile(TString src);
-    int readModuleCoordinateFile(TString src);
-
-    int makePatterns_map(TString src);
-    int writePatterns_map(TString out);
-
-    int makePatterns_fas(TString src);
-    int writePatterns_fas(TString out);
-
     // Main driver
     int run(TString src, TString datadir, TString out);
 
+
   private:
+    // Member functions
+    // Setup trigger tower and superstrip definitions
+    int setupTriggerTower(TString datadir);
+    int setupSuperstrip();
+
+    // Generate pattern bank
+    int makePatterns(TString src);
+
+    // Write pattern bank
+    int writePatterns(TString out);
+
     // Configurations
-    const PatternBankOption po;
-    const unsigned nLayers_;
-    const unsigned nDCBits_;  // UNUSED
-    const unsigned nFakers_;
+    const PatternBankOption po_;
 
     // Program options
     long long nEvents_;
-    int minFrequency_;  // min frequency of a pattern to be valid
+    int minFrequency_;  // min frequency of a pattern to be stored
     int verbose_;
 
     // Operators
-    SuperstripArbiter  * arbiter_;
-    SuperstripStitcher * stitcher_;
+    TriggerTowerMap   * ttmap_;
+    SuperstripArbiter * arbiter_;
 
     // Pattern bank data
-    std::map<pattern_type, unsigned> allPatterns_map_;  // using std::map approach
-    std::vector<std::pair<pattern_type, unsigned> > allPatterns_map_pairs_;
-    fas::lean_table3 allPatterns_fas_;                  // using fas::lean_table3 approach
-
-    // Maps
-    std::map<unsigned, std::vector<unsigned> > triggerTowerMap_;        // key: towerId, value: moduleIds in the tower
-    std::map<unsigned, std::vector<unsigned> > triggerTowerReverseMap_; // key: moduleId, value: towerIds containing the module
-    std::map<unsigned, ModuleCoordinate>       moduleCoordinateMap_;    // key: moduleId, value: rho, eta, phi of the module
+    std::map<pattern_type, unsigned>                patternBank_map_;
+    std::vector<std::pair<pattern_type, unsigned> > patternBank_pairs_;
 
     // Bookkeepers
     float coverage_;

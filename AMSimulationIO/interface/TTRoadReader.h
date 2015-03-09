@@ -1,7 +1,7 @@
 #ifndef AMSimulationIO_TTRoadReader_h_
 #define AMSimulationIO_TTRoadReader_h_
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTPattern.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTRoad.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/BasicReader.h"
 
 
@@ -16,11 +16,11 @@ class TTRoadReader : public BasicReader {
     int init(TString src, TString prefix, TString suffix);
 
     // Roads
-    std::vector<id_type> *                  vr_bankIndex;
-    std::vector<id_type> *                  vr_triggerTowerId;
-    std::vector<count_type> *               vr_nsuperstrips;
-    std::vector<std::vector<id_type> > *    vr_stubSuperstripIds;
-    std::vector<std::vector<unsigned> > *   vr_stubRefs;
+    std::vector<unsigned> *                             vr_patternRef;
+    std::vector<unsigned> *                             vr_tower;
+    std::vector<unsigned> *                             vr_nstubs;
+    std::vector<std::vector<unsigned> > *               vr_superstripIds;
+    std::vector<std::vector<std::vector<unsigned> > > * vr_stubRefs;
 };
 
 
@@ -36,11 +36,11 @@ class TTRoadWriter : public BasicWriter {
 
   protected:
     // Roads
-    std::auto_ptr<std::vector<id_type> >                  vr_bankIndex;
-    std::auto_ptr<std::vector<id_type> >                  vr_triggerTowerId;
-    std::auto_ptr<std::vector<count_type> >               vr_nsuperstrips;
-    std::auto_ptr<std::vector<std::vector<id_type> > >    vr_stubSuperstripIds;
-    std::auto_ptr<std::vector<std::vector<unsigned> > >   vr_stubRefs;
+    std::auto_ptr<std::vector<unsigned> >                             vr_patternRef;
+    std::auto_ptr<std::vector<unsigned> >                             vr_tower;
+    std::auto_ptr<std::vector<unsigned> >                             vr_nstubs;
+    std::auto_ptr<std::vector<std::vector<unsigned> > >               vr_superstripIds;
+    std::auto_ptr<std::vector<std::vector<std::vector<unsigned> > > > vr_stubRefs;
 };
 
 }  // namespace slhcl1tt

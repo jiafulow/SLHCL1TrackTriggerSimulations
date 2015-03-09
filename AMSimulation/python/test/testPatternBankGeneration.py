@@ -22,7 +22,7 @@ class TestAMSim(unittest.TestCase):
     def test_nevents(self):
         #self.assertEqual(self.nevents, 63 + 15 * 7 + 0 * 28)
         #self.assertEqual(self.nevents, 78)
-        self.assertEqual(self.nevents, 77)
+        self.assertEqual(self.nevents, 50)
 
     def test_superstripIds(self):
         allowed_layers = [5,6,7,8,9,10,11,12,13,14,15,18,19,20,21,22]

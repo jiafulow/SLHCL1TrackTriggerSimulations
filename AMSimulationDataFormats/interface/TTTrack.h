@@ -60,8 +60,6 @@ class TTTrack {
     /// Road
     unsigned int getRoadRef() const                { return theRoadRef_; }
     void         setRoadRef(unsigned int aRoad)    { theRoadRef_ = aRoad; }
-    unsigned int getCombinationRef() const             { return theCombinationRef_; }
-    void         setCombinationRef(unsigned int aComb) { theCombinationRef_ = aComb; }
 
     /// Chi2
     double       getChi2(unsigned int nPar=5) const;
@@ -90,7 +88,6 @@ class TTTrack {
     unsigned int theSector_;
     unsigned int theWedge_;
     unsigned int theRoadRef_;
-    unsigned int theCombinationRef_;
     double       theChi24Par_;
     double       theChi25Par_;
     double       theStubPtConsistency4Par_;

@@ -6,11 +6,10 @@ using namespace slhcl1tt;
 
 // _____________________________________________________________________________
 PatternBankReader::PatternBankReader(int verbose)
-: pb_ttmap          (0),
-  pb_ttrmap         (0),
-  //
-  pb_coverage       (0.),
+: pb_coverage       (0.),
   pb_count          (0),
+  pb_tower          (0),
+  pb_superstrip     (0),
   //
   pb_frequency      (0),
   pb_superstripIds  (0),
@@ -18,7 +17,6 @@ PatternBankReader::PatternBankReader(int verbose)
   verbose_(verbose) {}
 
 PatternBankReader::~PatternBankReader() {
-    if (ttree3) delete ttree3;
     if (ttree2) delete ttree2;
     if (ttree)  delete ttree;
     if (tfile)  delete tfile;
@@ -40,17 +38,13 @@ int PatternBankReader::init(TString src) {
         return 1;
     }
 
-    ttree3 = (TTree*) tfile->Get("triggerTower");
-    assert(ttree3 != 0);
-
-    ttree3->SetBranchAddress("triggerTowerMap"       , &pb_ttmap);
-    ttree3->SetBranchAddress("triggerTowerReverseMap", &pb_ttrmap);
-
-    ttree2 = (TTree*) tfile->Get("patternBankStats");
+    ttree2 = (TTree*) tfile->Get("patternBankInfo");
     assert(ttree2 != 0);
 
-    ttree2->SetBranchAddress("coverage", &pb_coverage);
-    ttree2->SetBranchAddress("count"   , &pb_count);
+    ttree2->SetBranchAddress("coverage"  , &pb_coverage);
+    ttree2->SetBranchAddress("count"     , &pb_count);
+    ttree2->SetBranchAddress("tower"     , &pb_tower);
+    ttree2->SetBranchAddress("superstrip", &pb_superstrip);
 
     ttree = (TTree*) tfile->Get("patternBank");
     assert(ttree != 0);
@@ -61,37 +55,29 @@ int PatternBankReader::init(TString src) {
     return 0;
 }
 
-void PatternBankReader::getTriggerTowerMaps(std::map<unsigned, std::vector<unsigned> >& ttmap,
-                                            std::map<unsigned, std::vector<unsigned> >& ttrmap) {
-    ttree3->GetEntry(0);
-
-    ttmap.swap(*pb_ttmap);
-    ttrmap.swap(*pb_ttrmap);
-}
-
-void PatternBankReader::getPatternBankStats(float& coverage, unsigned& count) {
+void PatternBankReader::getPatternBankInfo(float& coverage, unsigned& count, unsigned& tower, std::string& superstrip) {
     ttree2->GetEntry(0);
 
-    coverage = pb_coverage;
-    count = pb_count;
+    coverage   = pb_coverage;
+    count      = pb_count;
+    tower      = pb_tower;
+    superstrip = (*pb_superstrip);
 }
 
 
 // _____________________________________________________________________________
 PatternBankWriter::PatternBankWriter(int verbose)
-: pb_ttmap          (0),
-  pb_ttrmap         (0),
-  //
-  pb_coverage       (new float(0.)),
+: pb_coverage       (new float(0.)),
   pb_count          (new unsigned(0)),
+  pb_tower          (new unsigned(0)),
+  pb_superstrip     (new std::string("")),
   //
-  pb_frequency      (new count_type(0)),
-  pb_superstripIds  (new std::vector<id_type>()),
+  pb_frequency      (new frequency_type(0)),
+  pb_superstripIds  (new std::vector<superstrip_type>()),
   //
   verbose_(verbose) {}
 
 PatternBankWriter::~PatternBankWriter() {
-    if (ttree3) delete ttree3;
     if (ttree2) delete ttree2;
     if (ttree)  delete ttree;
     if (tfile)  delete tfile;
@@ -109,17 +95,14 @@ int PatternBankWriter::init(TString out) {
     tfile = TFile::Open(out, "RECREATE");
 
     if (tfile) {
-        if (verbose_)  std::cout << Info() << "Successfully recreated " << out << std::endl;
+        if (verbose_)  std::cout << Info() << "Successfully opened " << out << std::endl;
     } else {
-        std::cout << Error() << "Failed to recreate " << out << std::endl;
+        std::cout << Error() << "Failed to open " << out << std::endl;
         return 1;
     }
 
-    // Trigger tower map
-    ttree3 = new TTree("triggerTower", "");
-
     // Pattern bank statistics
-    ttree2 = new TTree("patternBankStats", "");
+    ttree2 = new TTree("patternBankInfo", "");
 
     // Pattern bank
     ttree = new TTree("patternBank", "");
@@ -129,16 +112,11 @@ int PatternBankWriter::init(TString out) {
     return 0;
 }
 
-void PatternBankWriter::fillTriggerTowerMaps() {
-    ttree3->Branch("triggerTowerMap"       , pb_ttmap);
-    ttree3->Branch("triggerTowerReverseMap", pb_ttrmap);
-    ttree3->Fill();
-    assert(ttree3->GetEntries() == 1);
-}
-
-void PatternBankWriter::fillPatternBankStats() {
-    ttree2->Branch("coverage", &(*pb_coverage));
-    ttree2->Branch("count"   , &(*pb_count));
+void PatternBankWriter::fillPatternBankInfo() {
+    ttree2->Branch("coverage"  , &(*pb_coverage));
+    ttree2->Branch("count"     , &(*pb_count));
+    ttree2->Branch("tower"     , &(*pb_tower));
+    ttree2->Branch("superstrip", &(*pb_superstrip));
     ttree2->Fill();
     assert(ttree2->GetEntries() == 1);
 }
@@ -153,4 +131,3 @@ Long64_t PatternBankWriter::writeTree() {
     //tfile->Close();
     return nentries;
 }
-

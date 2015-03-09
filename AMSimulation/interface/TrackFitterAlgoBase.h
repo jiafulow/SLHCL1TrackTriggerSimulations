@@ -1,7 +1,7 @@
 #ifndef AMSimulation_TrackFitterAlgoBase_h_
 #define AMSimulation_TrackFitterAlgoBase_h_
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTSuperstrip.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTHit.h"
 //#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack2.h"
 using namespace slhcl1tt;

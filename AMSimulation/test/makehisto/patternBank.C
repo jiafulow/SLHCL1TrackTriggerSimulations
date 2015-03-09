@@ -13,7 +13,10 @@ void patternBank() {
     //TString infilename = "patternBank_200x1_ttt27zm_38M.2GeV.root";  double finalCoverage = 0.99715;
     //TString infilename = "patternBank_400x1_ttt27zm_38M.2GeV.root";  double finalCoverage = 0.96221;
     //TString infilename = "patternBank_200x1_ttt27zm_38M.10GeV.root"; double finalCoverage = 0.99954;
-    TString infilename = "patternBank_400x1_ttt27zm_38M.10GeV.root"; double finalCoverage = 0.99377;
+    //TString infilename = "patternBank_400x1_ttt27zm_38M.10GeV.root"; double finalCoverage = 0.99377;
+
+    //TString infilename = "patternBank_sp16_ss512_tt27_250M.root";   double finalCoverage = 0.99975;
+    TString infilename = "patternBank_sp16_ss512_tt27_16M.root";   double finalCoverage = 0.99489;
 
     TString outfilename = infilename; outfilename.ReplaceAll("patternBank_", "histos_");
     TFile *infile = TFile::Open(infilename);
