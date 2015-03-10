@@ -79,7 +79,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
         reader.getEntry(ievt);
 
         const unsigned nroads = reader.vr_patternRef->size();
-        if (verbose_>1 && ievt%5000==0)  std::cout << Debug() << Form("... Processing event: %7lld, fitting: %7ld", ievt, nKept) << std::endl;
+        if (verbose_>1 && ievt%1000==0)  std::cout << Debug() << Form("... Processing event: %7lld, fitting: %7ld", ievt, nKept) << std::endl;
         if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " # roads: " << nroads << std::endl;
 
         if (!nroads) {  // skip if no road
@@ -136,7 +136,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
 
                 fitstatus = fitterRetina_->fit(tower, ievt, iroad, hits, tracks);
 
-                if (verbose_>2)  std::cout << Debug() << "... ... # tracks: " << tracks.size() << " status: " << fitstatus << std::endl;
+                if (verbose_>2)  std::cout << Debug() << "... ... road: " << iroad << " # tracks: " << tracks.size() << " status: " << fitstatus << std::endl;
 
                 /// Debug
                 if (verbose_>3 && tracks.size()>0) {
@@ -215,8 +215,11 @@ int TrackFitter::makeTracks(TString src, TString out) {
 
                     // Loop over the stubs
                     std::vector<TTHit> hits;
-                    for (unsigned istub=0; istub<nstubs; ++istub) {
+                    for (unsigned istub=0; istub<stubRefs.size(); ++istub) {
                         const unsigned& ref = stubRefs.at(istub);
+                        if (ref == 999999)  // empty
+                            continue;
+
                         hits.emplace_back(TTHit{                // using POD type constructor
                             ref,
                             reader.vb_r->at(ref),
@@ -235,15 +238,15 @@ int TrackFitter::makeTracks(TString src, TString out) {
                     atrack.setTower(tower);
                     atrack.setStubRefs(stubRefs);
 
-                    if (po_.mode == 0)
-                        fitstatus = fitterLin_->fit(hits, atrack);
-                    else
+                    if (po_.mode == 1)
                         fitstatus = fitterDas_->fit(hits, atrack);
+                    else
+                        fitstatus = fitterLin_->fit(hits, atrack);
                     tracks.push_back(atrack);
 
                     if (verbose_>2)  std::cout << Debug() << "... ... ... track: " << icomb << " status: " << fitstatus << std::endl;
                 }
-            }
+            }  // loop over the roads
 
             break;
         }

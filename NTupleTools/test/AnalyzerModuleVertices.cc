@@ -165,7 +165,7 @@ void AnalyzerModuleVertices::beginRun(const edm::Run& iRun, const edm::EventSetu
         const DetId geoId1 = det1->geographicalId();
 
         uint32_t moduleId0 = getModuleId(geoId0);
-        uint32_t moduleId1 = getModuleId(geoId0);
+        uint32_t moduleId1 = getModuleId(geoId1);
         assert(moduleId0 == moduleId1);
 
         if (moduleId0ToGeoId.find(moduleId0) == moduleId0ToGeoId.end() )

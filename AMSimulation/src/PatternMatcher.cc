@@ -169,7 +169,6 @@ int PatternMatcher::makeRoads(TString src, TString out) {
     // Loop over all events
 
     // Containers
-    TTRoad aroad;
     std::vector<TTRoad> roads;
     roads.reserve(300);
 
@@ -290,8 +289,19 @@ int PatternMatcher::makeRoads(TString src, TString out) {
         std::vector<unsigned>::const_iterator itfound;
 
         for (std::vector<unsigned>::const_iterator it = firedPatterns.begin(); it != firedPatterns.end(); ++it) {
-            aroad.reset(); // clear aroad
+            // Create and set TTRoad
+            TTRoad aroad;
+            aroad.patternRef = (*it);
+            aroad.tower      = po_.tower;
+            aroad.nstubs     = 0;
 
+            aroad.superstripIds.clear();
+            aroad.stubRefs.clear();
+
+            aroad.superstripIds.resize(po_.nLayers);
+            aroad.stubRefs.resize(po_.nLayers);
+
+            // Retrieve the pattern to get the superstripIds
             std::vector<pattern_type>::const_iterator itpatt = patternBank_.begin() + (*it);
 
             unsigned layer = 0;
@@ -304,6 +314,7 @@ int PatternMatcher::makeRoads(TString src, TString out) {
                 if (found != hitBuffer_.end()) {
                     aroad.superstripIds[layer] = found->first;
                     aroad.stubRefs     [layer] = found->second;
+                    aroad.nstubs              += found->second.size();
 
                 } else {
                     // ??

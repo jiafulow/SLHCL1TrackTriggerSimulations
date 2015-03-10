@@ -13,18 +13,6 @@ struct TTRoad {
     unsigned nstubs;
     std::vector<unsigned> superstripIds;  // necessary?
     std::vector<std::vector<unsigned> > stubRefs;  // stubRefs[superstrip i][stub j]
-
-    void reset() {
-        patternRef  = 0;
-        tower       = 99;
-        nstubs      = 0;
-
-        superstripIds.clear();
-        stubRefs.clear();
-
-        superstripIds.resize(8);
-        stubRefs.resize(8);
-    }
 };
 
 
