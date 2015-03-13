@@ -1,6 +1,14 @@
-#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoDas.h"
-#include <iostream>
+/* --- An Analytical Track Fitter for rapid least-chi2 fitting ---
 
+Algorithm described in CMS Detector Note DN-2015/004
+cms.cern.ch/iCMS/jsp/openfile.jsp?tp=draft&files=DN2015_004_v2.pdf
+
+Souvik Das, University of Florida
+15 October 2014
+--- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoATF.h"
+#include <iostream>
 
 int stubUncertaintyStripWidth(double r, double &d_phi, double &d_z)
 {
@@ -188,10 +196,8 @@ int stubUncertaintyResidual(double r, double &d_phi, double &d_z)
   return 1;
 }
 
-int TrackFitterAlgoDas::fit(const std::vector<TTHit>& hits, TTTrack2& track)
+int TrackFitterAlgoATF::fit(const std::vector<TTHit>& hits, TTTrack2& track)
 {
-  bool fiveParameters=false;
-  
   double A=0, B=0, C=0, D=0, E=0, F=0, G=0, H=0, I=0, J=0, K=0, L=0, M=0, P=0, Q=0;
   for (unsigned int i=0; i<hits.size(); ++i)
   {
@@ -206,22 +212,6 @@ int TrackFitterAlgoDas::fit(const std::vector<TTHit>& hits, TTTrack2& track)
     double d_phi_sq=d_phi*d_phi;
     double d_z_sq=d_z*d_z;
 
-    /*A+=phi/d_phi_sq;
-    B+=1/d_phi_sq;
-    C+=r/d_phi_sq;
-    D+=r*phi/d_phi_sq;   // D --> E
-    E+=r*r/d_phi_sq;     // E --> F
-    F+=r*z/d_z_sq;       // F --> G
-    G+=r*r/d_z_sq;       // G --> I
-    H+=r/d_z_sq;
-    I+=z/d_z_sq;         // I --> L
-    J+=1/d_z_sq;         // J --> M
-
-    K+=phi*phi/d_phi_sq; // K --> P
-    L+=z*z/d_z_sq;       // L --> Q
-     
-    */
-    
     A+=phi/d_phi_sq;
     B+=1./d_phi_sq;
     C+=r/d_phi_sq;
@@ -240,7 +230,7 @@ int TrackFitterAlgoDas::fit(const std::vector<TTHit>& hits, TTTrack2& track)
     Q+= z*z/d_z_sq;
   }
   
-  if (fiveParameters)
+  if (fiveParameters_)
   {  
     double denom1 = B*B*B - 2*B*C*D + D*D*F + C*C*K - B*F*K;
     double denom2 = I*M - H*H;
@@ -288,15 +278,8 @@ int TrackFitterAlgoDas::fit(const std::vector<TTHit>& hits, TTTrack2& track)
                  
     int    ndof = (hits.size());
 
-    // double chi2_phi = P + pow(phi0, 2)*B + F*pow(rinv/2., 2)
-    //                - 2.*A*phi0 + E*rinv 
-    //                - C*phi0*rinv;
-                    
     double chi2_phi = P + E*rinv/2. - phi0*A;
 
-    // double chi2_z   = Q + M*pow(z0, 2) + I*pow(cottheta0, 2) - 2.*L*z0 - 2.*G*cottheta0 
-    //                + 2.*H*z0*cottheta0;
-                    
     double chi2_z = Q - L*z0 - G*cottheta0;
     
     track.setTrackParams(rinv, phi0, cottheta0, z0, 0, chi2, ndof, chi2_phi, chi2_z);

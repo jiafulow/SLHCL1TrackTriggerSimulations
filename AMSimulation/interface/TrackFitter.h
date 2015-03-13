@@ -4,12 +4,13 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterOption.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoLinearized.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoDas.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoATF.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoRetina.h"
 using namespace slhcl1tt;
 
 
 class TrackFitter {
+
   public:
     // Constructor
     TrackFitter(TrackFitterOption po)
@@ -20,25 +21,19 @@ class TrackFitter {
 
         // Decide the track fitter to use
         fitterLin_    = 0;
-        fitterDas_    = 0;
+        fitterATF_    = 0;
         fitterRetina_ = 0;
-        switch (po_.mode) {
-        case 1:
-            fitterDas_ = new TrackFitterAlgoDas();
-            break;
-        case 2:
-            fitterRetina_ = new TrackFitterAlgoRetina();
-            break;
-        default:
-            fitterLin_ = new TrackFitterAlgoLinearized();
-            break;
-        }
+        if (po_.mode=="ATF4")      fitterATF_ = new TrackFitterAlgoATF(false);
+        else if (po_.mode=="ATF5") fitterATF_ = new TrackFitterAlgoATF(true);
+        else if (po_.mode=="PCA4") fitterLin_ = new TrackFitterAlgoLinearized();
+        else if (po_.mode=="RET")  fitterRetina_ = new TrackFitterAlgoRetina();
+        
     }
 
     // Destructor
     ~TrackFitter() {
         if (fitterLin_)    delete fitterLin_;
-        if (fitterDas_)    delete fitterDas_;
+        if (fitterATF_)    delete fitterATF_;
         if (fitterRetina_) delete fitterRetina_;
     }
 
@@ -74,7 +69,7 @@ class TrackFitter {
 
     // Track fitters
     TrackFitterAlgoLinearized * fitterLin_;
-    TrackFitterAlgoDas *        fitterDas_;
+    TrackFitterAlgoATF *        fitterATF_;
     TrackFitterAlgoRetina *     fitterRetina_;
 };
 

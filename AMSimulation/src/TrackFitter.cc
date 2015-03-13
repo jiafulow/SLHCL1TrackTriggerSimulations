@@ -91,8 +91,8 @@ int TrackFitter::makeTracks(TString src, TString out) {
         tracks.clear();
         int fitstatus = 0;
 
-        switch (po_.mode) {
-        case 2:
+        if (po_.mode=="RET")
+        {
             // _________________________________________________________________
             // Track fitters taking the entire road
 
@@ -178,11 +178,11 @@ int TrackFitter::makeTracks(TString src, TString out) {
                 }
 
             }  // loop over the roads
-            break;
-
-
-        case 1:
-        default:
+            
+        }
+        
+        else if (po_.mode=="ATF4" || po_.mode=="ATF5" || po_.mode=="PCA")
+        {
             // _________________________________________________________________
             // Track fitters taking fit combinations
 
@@ -238,17 +238,17 @@ int TrackFitter::makeTracks(TString src, TString out) {
                     atrack.setTower(tower);
                     atrack.setStubRefs(stubRefs);
 
-                    if (po_.mode == 1)
-                        fitstatus = fitterDas_->fit(hits, atrack);
-                    else
+                    if (po_.mode=="ATF4" || po_.mode=="ATF5")
+                        fitstatus = fitterATF_->fit(hits, atrack);
+                    else if (po_.mode=="PCA4")
                         fitstatus = fitterLin_->fit(hits, atrack);
+                        
                     tracks.push_back(atrack);
 
                     if (verbose_>2)  std::cout << Debug() << "... ... ... track: " << icomb << " status: " << fitstatus << std::endl;
                 }
             }  // loop over the roads
-
-            break;
+            
         }
 
         if (verbose_>3) {
