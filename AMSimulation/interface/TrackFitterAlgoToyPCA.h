@@ -13,11 +13,14 @@ class TrackFitterAlgoToyPCA
     ~TrackFitterAlgoToyPCA() {}
 
     int loadVD(std::string filename);
-    int fit(const std::vector<TTHit>& hits, const std::vector<TTHit>& centralHits, TTTrack2& track);
+    int fit(const std::vector<TTHit>& hits, TTTrack2& track);
     
   private:  
     double computeParameter(int trackParameter, std::vector<TTHit>& dhits);
-    std::vector<std::vector<double> > m_VD_;
+    unsigned int nStubCoordinates_;
+    unsigned int nTrackParameters_;
+    std::vector<std::vector<double> > m_V_, m_D_, m_VD_;
+    std::vector<std::vector<double> > c_CentralStubCoords_Ladders_, c_CentralTrackParams_Ladders_;
     
 };
 
