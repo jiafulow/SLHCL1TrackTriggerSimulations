@@ -185,7 +185,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
             
         }
         
-        else if (po_.mode=="ATF4" || po_.mode=="ATF5" || po_.mode=="PCA4")
+        else // All the combination-specific fitters
         {
             // _________________________________________________________________
             // Track fitters taking fit combinations

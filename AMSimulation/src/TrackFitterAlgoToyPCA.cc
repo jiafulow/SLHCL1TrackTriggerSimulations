@@ -118,6 +118,7 @@ int TrackFitterAlgoToyPCA::fit(const std::vector<TTHit>& hits, TTTrack2& track)
 {
    // Compute dhits;
    std::vector<TTHit> dhits;
+   // std::cout<<"--- "<<std::endl;
    for (unsigned int i=0; i<hits.size(); ++i)
    {
      const TTHit& hit=hits.at(i);
@@ -135,13 +136,14 @@ int TrackFitterAlgoToyPCA::fit(const std::vector<TTHit>& hits, TTTrack2& track)
                               0.,
                               0.
                          });
+     // std::cout<<"r = "<<hit.r<<std::endl;
    }
    
    //Compute the track parameters
    double rinv      = c_CentralTrackParams_Ladders_.at(0).at(0)+computeParameter(0, dhits);
    double phi0      = c_CentralTrackParams_Ladders_.at(0).at(1)+computeParameter(1, dhits);
-   double z0        = c_CentralTrackParams_Ladders_.at(0).at(2)+computeParameter(2, dhits);
-   double cottheta0 = c_CentralTrackParams_Ladders_.at(0).at(3)+computeParameter(3, dhits);
+   double cottheta0 = c_CentralTrackParams_Ladders_.at(0).at(2)+computeParameter(2, dhits);
+   double z0        = c_CentralTrackParams_Ladders_.at(0).at(3)+computeParameter(3, dhits);
    
    int ndof = (hits.size());
    
