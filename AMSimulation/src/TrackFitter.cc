@@ -66,7 +66,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
     
     //  _________________________________________________________________________
     // Initialize fitter outside loop when necessary
-    if (po_.mode=="PCA4") fitterLin_->loadVD("matrixVD_0_pt_10_more.txt");
+    if (po_.mode=="PCA4") fitterLin_->loadVD("matrixVD_0_pt_range_2_10.txt");
 
     // _________________________________________________________________________
     // Loop over all events
@@ -276,6 +276,10 @@ int TrackFitter::makeTracks(TString src, TString out) {
         writer.fill(tracks);
         ++nRead;
     }
+    
+    //  _________________________________________________________________________
+    // Save plots outside loop when necessary
+    if (po_.mode=="PCA4") fitterLin_->savePlots();
 
     if (verbose_)  std::cout << Info() << Form("Read: %7ld, triggered: %7ld", nRead, nKept) << std::endl;
 
