@@ -128,11 +128,11 @@ int TrackFitterAlgoToyPCA::loadVD(std::string filename)
 double TrackFitterAlgoToyPCA::computeParameter(int trackParameter, std::vector<TTHit>& dhits)
 {
   double param=0;
-  /*for (unsigned int i=0; i<dhits.size(); ++i)
+  for (unsigned int i=0; i<dhits.size(); ++i)
   {
     param = param + (m_VD_.at(trackParameter).at(i*2)) * (dhits.at(i).phi)
                   + (m_VD_.at(trackParameter).at(i*2+1)) * (dhits.at(i).z);
-  }*/
+  }
   return param;
 }
 
@@ -152,7 +152,7 @@ void TrackFitterAlgoToyPCA::computePrincipals(std::vector<TTHit>& dhits)
     v_h_principals_.at(i*2+1)->Fill(sum2/v_sqrtEigenvalues_.at(i*2+1));
   }
   
-  // Multiplying hV
+  // Multiplying hV // this is wrong
   /*for (unsigned int i=0; i<dhits.size(); ++i) // columns
   {
     double sum1=0;
@@ -196,14 +196,14 @@ int TrackFitterAlgoToyPCA::fit(const std::vector<TTHit>& hits, TTTrack2& track)
    computePrincipals(dhits);
    
    //Compute the track parameters
-   // double rinv      = c_CentralTrackParams_Ladders_.at(0).at(0)+computeParameter(0, dhits);
-   // double phi0      = c_CentralTrackParams_Ladders_.at(0).at(1)+computeParameter(1, dhits);
-   // double cottheta0 = c_CentralTrackParams_Ladders_.at(0).at(2)+computeParameter(2, dhits);
-   /// double z0        = c_CentralTrackParams_Ladders_.at(0).at(3)+computeParameter(3, dhits);
+   double rinv      = c_CentralTrackParams_Ladders_.at(0).at(0)+computeParameter(0, dhits);
+   double phi0      = c_CentralTrackParams_Ladders_.at(0).at(1)+computeParameter(1, dhits);
+   double cottheta0 = c_CentralTrackParams_Ladders_.at(0).at(2)+computeParameter(2, dhits);
+   double z0        = c_CentralTrackParams_Ladders_.at(0).at(3)+computeParameter(3, dhits);
    
-   // int ndof = (hits.size());
+   int ndof = (hits.size());
    
-   // track.setTrackParams(rinv, phi0, cottheta0, z0, 0, 0, ndof, 0, 0);
+   track.setTrackParams(rinv, phi0, cottheta0, z0, 0, 0, ndof, 0, 0);
 
    return 0;
 }
