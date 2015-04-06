@@ -4,6 +4,7 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterOption.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoLinearized.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoToyPCA.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoATF.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoRetina.h"
 using namespace slhcl1tt;
@@ -25,7 +26,7 @@ class TrackFitter {
         fitterRetina_ = 0;
         if (po_.mode=="ATF4")      fitterATF_ = new TrackFitterAlgoATF(false);
         else if (po_.mode=="ATF5") fitterATF_ = new TrackFitterAlgoATF(true);
-        else if (po_.mode=="PCA4") fitterLin_ = new TrackFitterAlgoLinearized();
+        else if (po_.mode=="PCA4") fitterLin_ = new TrackFitterAlgoToyPCA();
         else if (po_.mode=="RET")  fitterRetina_ = new TrackFitterAlgoRetina();
         
     }
@@ -68,7 +69,7 @@ class TrackFitter {
     int verbose_;
 
     // Track fitters
-    TrackFitterAlgoLinearized * fitterLin_;
+    TrackFitterAlgoToyPCA * fitterLin_;
     TrackFitterAlgoATF *        fitterATF_;
     TrackFitterAlgoRetina *     fitterRetina_;
 };
