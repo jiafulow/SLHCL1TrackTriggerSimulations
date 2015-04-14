@@ -14,7 +14,8 @@ class TrackFitterAlgoToyPCA
     ~TrackFitterAlgoToyPCA() {}
 
     int loadVD(std::string filename);
-    void computePrincipals(std::vector<TTHit>& dhits);
+    void   computePrincipals(std::vector<TTHit>& dhits);
+    double computePrincipal(int i, std::vector<TTHit>& dhits);
     int fit(const std::vector<TTHit>& hits, TTTrack2& track);
     void savePlots();
     
