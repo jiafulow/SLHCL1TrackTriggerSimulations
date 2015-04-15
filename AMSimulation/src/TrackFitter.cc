@@ -66,7 +66,8 @@ int TrackFitter::makeTracks(TString src, TString out) {
     
     //  _________________________________________________________________________
     // Initialize fitter outside loop when necessary
-    if (po_.mode=="PCA4") fitterLin_->loadVD("matrixVD_0_cOverPt_FirstEstimate.txt");
+    // if (po_.mode=="PCA4") fitterLin_->loadVD("matrixVD_0_cOverPt_FirstEstimate.txt");
+    if (po_.mode=="PCA4") fitterLin_->loadVD("matrixVD_0_FirstEstimate.txt");
 
     // _________________________________________________________________________
     // Loop over all events
