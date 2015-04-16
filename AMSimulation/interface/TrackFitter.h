@@ -21,21 +21,32 @@ class TrackFitter {
       verbose_(1) {
 
         // Decide the track fitter to use
-        fitterLin_    = 0;
-        fitterATF_    = 0;
-        fitterRetina_ = 0;
-        if (po_.mode=="ATF4")      fitterATF_ = new TrackFitterAlgoATF(false);
-        else if (po_.mode=="ATF5") fitterATF_ = new TrackFitterAlgoATF(true);
-        else if (po_.mode=="PCA4") fitterLin_ = new TrackFitterAlgoToyPCA();
-        else if (po_.mode=="RET")  fitterRetina_ = new TrackFitterAlgoRetina();
+        // fitterLin_    = 0;
+        // fitterATF_    = 0;
+        // fitterRetina_ = 0;
+        // if (po_.mode=="ATF4")      fitterATF_ = new TrackFitterAlgoATF(false);
+        // else if (po_.mode=="ATF5") fitterATF_ = new TrackFitterAlgoATF(true);
+        // else if (po_.mode=="PCA4") fitterLin_ = new TrackFitterAlgoToyPCA();
+        // else if (po_.mode=="RET")  fitterRetina_ = new TrackFitterAlgoRetina();
+	fitter_ = 0;
+        if (po_.mode=="ATF4")      fitter_ = new TrackFitterAlgoATF(false);
+        else if (po_.mode=="ATF5") fitter_ = new TrackFitterAlgoATF(true);
+        else if (po_.mode=="PCA4") fitter_ = new TrackFitterAlgoToyPCA("matrixVD_0_FirstEstimate.txt");
+        else if (po_.mode=="LTF") fitter_ = new TrackFitterAlgoLinearized();
+        else if (po_.mode=="RET")  fitter_ = new TrackFitterAlgoRetina();
+	else {
+	  std::cout << "Error: unknown fitter type " << po_.mode << std::endl;
+	  throw;
+	}
         
     }
 
     // Destructor
     ~TrackFitter() {
-        if (fitterLin_)    delete fitterLin_;
-        if (fitterATF_)    delete fitterATF_;
-        if (fitterRetina_) delete fitterRetina_;
+        // if (fitterLin_)    delete fitterLin_;
+        // if (fitterATF_)    delete fitterATF_;
+        // if (fitterRetina_) delete fitterRetina_;
+      delete fitter_;
     }
 
 
@@ -69,9 +80,10 @@ class TrackFitter {
     int verbose_;
 
     // Track fitters
-    TrackFitterAlgoToyPCA * fitterLin_;
-    TrackFitterAlgoATF *        fitterATF_;
-    TrackFitterAlgoRetina *     fitterRetina_;
+    // TrackFitterAlgoToyPCA * fitterLin_;
+    // TrackFitterAlgoATF *        fitterATF_;
+    // TrackFitterAlgoRetina *     fitterRetina_;
+    TrackFitterAlgoBase * fitter_;
 };
 
 #endif

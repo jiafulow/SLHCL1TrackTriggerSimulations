@@ -7,17 +7,17 @@
 
 using namespace slhcl1tt;
 
-class TrackFitterAlgoToyPCA
+class TrackFitterAlgoToyPCA : public TrackFitterAlgoBase
 {
   public:
-    TrackFitterAlgoToyPCA(){}
-    ~TrackFitterAlgoToyPCA() {}
+  TrackFitterAlgoToyPCA(const std::string & filename);
+  virtual ~TrackFitterAlgoToyPCA();
 
-    int loadVD(std::string filename);
+  // int loadVD(std::string filename);
     void   computePrincipals(std::vector<TTHit>& dhits);
     double computePrincipal(int i, std::vector<TTHit>& dhits);
-    int fit(const std::vector<TTHit>& hits, TTTrack2& track);
-    void savePlots();
+    virtual int fit(const std::vector<TTHit>& hits, TTTrack2& track);
+    // void savePlots();
     
   private:  
     double computeParameter(int trackParameter, std::vector<TTHit>& dhits);

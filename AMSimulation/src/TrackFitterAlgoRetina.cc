@@ -12,7 +12,8 @@ TrackFitterAlgoRetina::~TrackFitterAlgoRetina(){
 }
 
 
-int TrackFitterAlgoRetina::fit(unsigned tower, unsigned eventNum, unsigned roadRef, const std::vector<TTHit>& hits, std::vector<TTTrack2>& tracks){
+// int TrackFitterAlgoRetina::fit(unsigned tower, unsigned eventNum, unsigned roadRef, const std::vector<TTHit>& hits, std::vector<TTTrack2>& tracks)
+int TrackFitterAlgoRetina::fit(const std::vector<TTHit>& hits, std::vector<TTTrack2>& tracks, unsigned tower, unsigned roadRef){
 
   int exitcode = 0;
 

@@ -127,14 +127,16 @@ std::string itoa(int i)
   return 0;
 }*/
 
-int TrackFitterAlgoToyPCA::loadVD(std::string filename)
+ // int TrackFitterAlgoToyPCA::loadVD(std::string filename)
+TrackFitterAlgoToyPCA::TrackFitterAlgoToyPCA(const std::string & filename)
 {
   std::ifstream inputFile;
   inputFile.open((filename).c_str());
   if (!inputFile)
   {
     std::cout<<"ERROR: Track fitting matrix file "<<filename<<" doesn't exist."<<std::endl;
-    return 0;
+    throw;
+    // return 0;
   }
   
   // Read number of variables and number of track parameters
@@ -197,7 +199,7 @@ int TrackFitterAlgoToyPCA::loadVD(std::string filename)
   v_h_principals_.push_back(new TH1F("h_principal_10", "; Component 10", 100, -3., 3.));
   v_h_principals_.push_back(new TH1F("h_principal_11", "; Component 11", 100, -3., 3.));
   
-  return 0;
+  // return 0;
 }
 
 double TrackFitterAlgoToyPCA::computeParameter(int trackParameter, std::vector<TTHit>& dhits)
@@ -211,7 +213,7 @@ double TrackFitterAlgoToyPCA::computeParameter(int trackParameter, std::vector<T
   return param;
 }
 
-int TrackFitterAlgoToyPCA::fit(const std::vector<TTHit>& hits, TTTrack2& track) 
+int TrackFitterAlgoToyPCA::fit(const std::vector<TTHit>& hits, TTTrack2& track)
 {
    // Compute dhits;
    std::vector<TTHit> dhits;
@@ -249,7 +251,8 @@ int TrackFitterAlgoToyPCA::fit(const std::vector<TTHit>& hits, TTTrack2& track)
    return 0;
 }
 
-void TrackFitterAlgoToyPCA::savePlots()
+// void TrackFitterAlgoToyPCA::savePlots()
+TrackFitterAlgoToyPCA::~TrackFitterAlgoToyPCA()
 {
   TFile *file=new TFile("Principals.root", "RECREATE");
   for (unsigned int i=0; i<v_h_principals_.size(); ++i)
