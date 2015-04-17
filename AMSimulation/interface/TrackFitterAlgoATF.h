@@ -12,16 +12,17 @@ Souvik Das, University of Florida
 
 #include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTHit.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack2.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoBase.h"
 
 using namespace slhcl1tt;
 
-class TrackFitterAlgoATF
+class TrackFitterAlgoATF : public TrackFitterAlgoBase
 {
   public:
     TrackFitterAlgoATF(bool fiveParameters) : fiveParameters_(fiveParameters){}
-    ~TrackFitterAlgoATF() {}
+    virtual ~TrackFitterAlgoATF() {}
 
-    int fit(const std::vector<TTHit>& hits, TTTrack2& track);
+    virtual int fit(const std::vector<TTHit>& hits, TTTrack2& track);
     
   private:
     bool fiveParameters_=false;
