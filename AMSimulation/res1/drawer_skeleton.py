@@ -5,7 +5,7 @@ from parser import *
 
 
 # ______________________________________________________________________________
-def drawer_book():
+def drawer_book(options):
     histos = {}
 
     # Style
@@ -49,7 +49,7 @@ def main(options):
     tchain.AddFileInfoList(options.tfilecoll.GetList())
 
     # Process
-    histos = drawer_book()
+    histos = drawer_book(options)
     drawer_project(tchain, histos, options)
     drawer_draw(histos, options)
     drawer_sitrep(histos, options)

@@ -174,11 +174,9 @@ def drawer_draw(histos, options):
         ps.SetX1NDC(newX1NDC)
         ps.SetY1NDC(newY1NDC)
 
-        h.stats = []
-        h.stats.append(h.GetMean())
         for iq, q in enumerate(in_quantiles):
             ps.AddText("%i%% CI = %6.4g" % (int(q*100), quantiles[iq]))
-            h.stats.append(quantiles[iq])
+        h.stats = [h.GetMean()] + quantiles.tolist()
 
         h.SetStats(0)
         #gPad.Modified(); gPad.Update()
@@ -287,7 +285,7 @@ def drawer_sitrep(histos, options):
     h = histos["ncombinations_per_road"]
     print "ncombs per road \t{0:6.4g}\t{1:6.4g}\t{2:6.4g}".format(*h.stats)
     h = histos["ncombinations_per_event"]
-    print "ncombs per event \t{0:6.4g}\t{1:6.4g}\t{2:6.4g}".format(*h.stats)
+    print "ncombs per event\t{0:6.4g}\t{1:6.4g}\t{2:6.4g}".format(*h.stats)
 
 
 # ______________________________________________________________________________

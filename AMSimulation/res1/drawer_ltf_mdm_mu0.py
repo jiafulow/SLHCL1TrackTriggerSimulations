@@ -72,7 +72,7 @@ def parse_parname_title(s, t):
         s = "#Delta%s mean" % s
     elif t == "resolution":
         s = "%s resolution" % s
-    for unit in ["[GeV]", "[cm]"]:
+    for unit in ["[1/GeV]", "[GeV]", "[cm]"]:
         if unit in s:
             s = s.replace(" "+unit, "")
             s = s+" "+unit
@@ -83,8 +83,8 @@ def drawer_project(tree, histos, options):
     tree.SetBranchStatus("genParts_pt"     , 1)
     tree.SetBranchStatus("genParts_eta"    , 1)
     tree.SetBranchStatus("genParts_phi"    , 1)
-    tree.SetBranchStatus("genParts_vx"     , 1)
-    tree.SetBranchStatus("genParts_vy"     , 1)
+    #tree.SetBranchStatus("genParts_vx"     , 1)
+    #tree.SetBranchStatus("genParts_vy"     , 1)
     tree.SetBranchStatus("genParts_vz"     , 1)
     tree.SetBranchStatus("genParts_charge" , 1)
     tree.SetBranchStatus("AMTTTracks_invPt"     , 1)
@@ -169,23 +169,20 @@ def drawer_draw(histos, options):
 
             nbinsx = h.GetNbinsX()
             gr1 = TGraphAsymmErrors(nbinsx)
-            gr1.SetName(hname + "_gr1")
+            gr1.SetName(hname + "_gr1"); setattr(h, "gr1", gr1)
             gr1.SetMarkerSize(1); gr1.SetMarkerColor(col)
             gr2 = TGraphAsymmErrors(nbinsx)
-            gr2.SetName(hname + "_gr2")
+            gr2.SetName(hname + "_gr2"); setattr(h, "gr2", gr2)
             gr2.SetMarkerSize(1); gr2.SetMarkerColor(col)
 
             for ibin in xrange(nbinsx):
-                hpy = h.ProjectionY(hname + "_py%i" % ibin, ibin+1, ibin+1)
-                setattr(h, "py%i" % ibin, hpy)
+                hpy = h.ProjectionY(hname + "_py%i" % ibin, ibin+1, ibin+1); setattr(h, "py%i" % ibin, hpy)
                 x = h.GetBinCenter(ibin+1)
 
                 if hpy.GetEntries() < 30:
                     print "WARNING: not enough entries in %s: %i" % (hpy.GetName(), hpy.GetEntries())
                     gr1.SetPoint(ibin, x, 999999)
-                    gr1.SetPointError(ibin, 0, 0, 0, 0)
                     gr2.SetPoint(ibin, x, 999999)
-                    gr2.SetPointError(ibin, 0, 0, 0, 0)
                     continue
 
                 if hpy.GetEntries() < 100:
@@ -196,12 +193,11 @@ def drawer_draw(histos, options):
                 fitxmin, fitxmax = hpy.GetBinCenter(10+1), hpy.GetBinCenter(hpy.GetNbinsX()-1-10+1)
                 if ibin in [0, 21, 30, 39]:
                     hpy.Draw()
-                    hpy.Fit("gaus", "I", "", fitxmin, fitxmax)
+                    r = hpy.Fit("gaus", "IS", "", fitxmin, fitxmax)
                 else:
-                    hpy.Fit("gaus", "IQ0", "", fitxmin, fitxmax)
+                    r = hpy.Fit("gaus", "INS", "", fitxmin, fitxmax)
 
-                f = hpy.GetFunction("gaus")
-                p1, p2, e1, e2 = f.GetParameter(1), f.GetParameter(2), f.GetParError(1), f.GetParError(2)
+                p1, e1, p2, e2 = r.Parameter(1), r.ParError(1), r.Parameter(2), r.ParError(2)
                 gr1.SetPoint(ibin, x, p1)
                 gr1.SetPointError(ibin, 0, 0, e1, e1)
                 gr2.SetPoint(ibin, x, p2)
@@ -212,18 +208,18 @@ def drawer_draw(histos, options):
 
                 if options.verbose:  print "%.3g mu=%.3g+/-%.3g sigma=%.3g+/-%.3g" % (x, p1, e1, p2, e2)
 
-            hpx = h.ProjectionX(hname + "_px"); hpx.Reset()
+            hpx1 = h.ProjectionX(hname + "_px1"); hpx1.Reset(); setattr(h, "px1", hpx1)
             if i < nparameters:
-                hpx.SetYTitle(parse_parname_title(parnames[i], "mean"))
+                hpx1.SetYTitle(parse_parname_title(parnames[i], "mean"))
             else:
-                hpx.SetYTitle("#Delta p_{T}/p_{T} mean")
-            hpx.SetMinimum(-meanmaxes[i]); hpx.SetMaximum(meanmaxes[i])
-            hpx.SetStats(0); hpx.Draw()
+                hpx1.SetYTitle("#Delta p_{T}/p_{T} mean")
+            hpx1.SetMinimum(-meanmaxes[i]); hpx1.SetMaximum(meanmaxes[i])
+            hpx1.SetStats(0); hpx1.Draw()
             gr1.Draw("p")
             CMS_label()
             save(options.outdir, "mean_"+hname)
 
-            hpx2 = h.ProjectionX(hname + "_px2"); hpx2.Reset()
+            hpx2 = h.ProjectionX(hname + "_px2"); hpx2.Reset(); setattr(h, "px2", hpx2)
             if i < nparameters:
                 hpx2.SetYTitle(parse_parname_title(parnames[i], "resolution"))
             else:
@@ -241,8 +237,6 @@ def drawer_draw(histos, options):
                 hh.Draw()
                 CMS_label()
                 save(options.outdir, "delta_"+hname)
-
-            donotdelete.append([hpx, hpx2, gr1, gr2])
     return
 
 def drawer_sitrep(histos, options):

@@ -12,7 +12,7 @@ def cust_pileup_input(process, sequential=False):
 
 # Run in tracker only, ignoring calorimeter and muon system
 # In CMSSW_6_2_0_SLHC12_patch1, processing speed is reduced to ~0.06 s/evt
-def cust_useTrackerOnly(process, sequential=False, intime=False, ntuple=True):
+def cust_useTrackerOnly(process, sequential=False, intime=False, ntuple=True, keepSimHits=True):
 
     # __________________________________________________________________________
     # Customise generation step
@@ -68,18 +68,14 @@ def cust_useTrackerOnly(process, sequential=False, intime=False, ntuple=True):
         process.mix.minBunch = 0
         process.mix.maxBunch = 0
 
+    # Keep SimHits
+    if keepSimHits:
+        for addee in ['TrackerHitsPixelBarrelHighTof', 'TrackerHitsPixelBarrelLowTof', 'TrackerHitsPixelEndcapHighTof', 'TrackerHitsPixelEndcapLowTof']:
+            process.mix.mixObjects.mixSH.crossingFrames.append(addee)
+            process.RAWSIMoutput.outputCommands.append('keep PSimHits_g4SimHits%s_*_*' % addee)
+
     # Drop sim hits in muon system
     process.mix.digitizers.mergedtruth.simHitCollections.muon = cms.VInputTag()
-
-    # Reduce number of tracking particles
-    process.mix.digitizers.mergedtruth.alwaysAddAncestors = cms.bool(False)
-    process.mix.digitizers.mergedtruth.maximumPreviousBunchCrossing = cms.uint32(0)
-    process.mix.digitizers.mergedtruth.maximumSubsequentBunchCrossing = cms.uint32(0)
-    process.mix.digitizers.mergedtruth.ignoreTracksOutsideVolume = cms.bool(True)
-    process.mix.digitizers.mergedtruth.select.ptMinTP = cms.double(0.2)
-    #process.mix.digitizers.mergedtruth.select.minHitTP = cms.int32(0)
-    process.mix.digitizers.mergedtruth.select.tipTP = process.mix.digitizers.mergedtruth.volumeRadius
-    process.mix.digitizers.mergedtruth.select.lipTP = process.mix.digitizers.mergedtruth.volumeZ
 
     # Drop digitizers
     for removee in ['ecal', 'hcal', 'castor']:
@@ -113,7 +109,7 @@ def cust_useTrackerOnly(process, sequential=False, intime=False, ntuple=True):
     # Customise L1TrackTrigger step
 
     # Drop tracklet method
-    process.L1TrackTrigger = process.L1TrackTrigger.copyAndExclude([process.TrackTriggerTTTracks, process.TrackTriggerAssociatorTracks])
+    #process.L1TrackTrigger = process.L1TrackTrigger.copyAndExclude([process.TrackTriggerTTTracks, process.TrackTriggerAssociatorTracks])
 
     # __________________________________________________________________________
     # Customise output steps
@@ -133,7 +129,8 @@ def cust_useTrackerOnly(process, sequential=False, intime=False, ntuple=True):
 
         # Straight to ntuples
         process.load("SLHCL1TrackTriggerSimulations.NTupleTools.sequences_cff")
-        process.p = cms.Path(process.ntupleSequence_TTI)
+        process.p = cms.Path(process.ntupleSequence)
+        #process.p = cms.Path(process.ntupleSequence_TTI)
         process.schedule.append(process.p)
 
     return (process)

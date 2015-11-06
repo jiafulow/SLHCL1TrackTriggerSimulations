@@ -16,5 +16,22 @@ ntupleTrackingVertices = cms.EDProducer('NTupleTrackingVertices',
     maxN = cms.uint32(999999)
 )
 
-ntupleDigi = cms.Sequence(ntupleTrackingParticles * ntupleTrackingVertices)
+ntupleMixedSimHits = cms.EDProducer('NTupleMixedSimHits',
+    inputTag = cms.InputTag('mix'),
+    inputTagTP = cms.InputTag('mix', 'MergedTrackTruth'),
+    simHitCollections = cms.PSet(
+        pixel = cms.VInputTag(
+            cms.InputTag('mix','g4SimHitsTrackerHitsPixelBarrelLowTof'),
+            cms.InputTag('mix','g4SimHitsTrackerHitsPixelBarrelHighTof'),
+            cms.InputTag('mix','g4SimHitsTrackerHitsPixelEndcapLowTof'),
+            cms.InputTag('mix','g4SimHitsTrackerHitsPixelEndcapHighTof'),
+        ),
+    ),
+    prefix = cms.string('mixedSimHits@'),
+    suffix = cms.string(''),
+    cut = cms.string(''),
+    maxN = cms.uint32(999999)
+)
+
+ntupleDigi = cms.Sequence(ntupleTrackingParticles * ntupleTrackingVertices * ntupleMixedSimHits)
 

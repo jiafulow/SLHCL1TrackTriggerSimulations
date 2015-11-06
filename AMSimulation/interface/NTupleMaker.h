@@ -33,7 +33,7 @@ class NTupleMaker {
     NTupleMaker(const ProgramOption& po)
     : po_(po),
       nEvents_(po.maxEvents), verbose_(po.verbose),
-      trim_(true) {
+      trim_(!po.no_trim) {
 
         makeLeafMap();
     }

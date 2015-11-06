@@ -29,7 +29,7 @@ def drawer_book():
         histos[hname] = TH1F(hname, "; fit %s" % parnames[i], 1000, -1., 1.)
 
         hname = "errpar%i" % i
-        histos[hname] = TH1F(hname, "; #sigma(%s)" % parnames[i], 1000, -0.1, 0.1)
+        histos[hname] = TH1F(hname, "; #Delta%s" % parnames[i], 1000, -0.1, 0.1)
 
     hname = "chi2Red"
     histos[hname] = TH1F(hname, "; #chi^{2}/ndof", 1000, 0, 10.)
@@ -59,6 +59,7 @@ def drawer_book():
     return histos
 
 def parse_parname(s):
+    s = s.replace("[1/GeV]","")
     s = s.replace("[GeV]","")
     s = s.replace("[cm]","")
     s = s.replace("#","")
@@ -73,8 +74,8 @@ def drawer_project(tree, histos, options):
     tree.SetBranchStatus("genParts_pt"     , 1)
     tree.SetBranchStatus("genParts_eta"    , 1)
     tree.SetBranchStatus("genParts_phi"    , 1)
-    tree.SetBranchStatus("genParts_vx"     , 1)
-    tree.SetBranchStatus("genParts_vy"     , 1)
+    #tree.SetBranchStatus("genParts_vx"     , 1)
+    #tree.SetBranchStatus("genParts_vy"     , 1)
     tree.SetBranchStatus("genParts_vz"     , 1)
     tree.SetBranchStatus("genParts_charge" , 1)
     tree.SetBranchStatus("AMTTTracks_invPt"     , 1)
@@ -176,11 +177,9 @@ def drawer_draw(histos, options):
         ps.SetX1NDC(newX1NDC)
         ps.SetY1NDC(newY1NDC)
 
-        h.stats = []
-        h.stats.append(h.GetMean())
         for iq, q in enumerate(in_quantiles):
             ps.AddText("%i%% CI = %6.4g" % (int(q*100), quantiles[iq]))
-            h.stats.append(quantiles[iq])
+        h.stats = [h.GetMean()] + quantiles.tolist()
 
         h.SetStats(0)
         #gPad.Modified(); gPad.Update()

@@ -113,7 +113,7 @@ def getMaximum(histos):
         maxima.append(h.h.GetMaximum())
     return max(maxima)
 
-def save(imgdir, imgname, redraw_axis=True, dot_pdf=True, dot_root=False, dot_c=False):
+def save(imgdir, imgname, redraw_axis=True, dot_pdf=True, dot_root=False, dot_c=False, additional=[]):
     if redraw_axis:
         gPad.RedrawAxis()
     #gPad.Modified(); gPad.Update()
@@ -129,6 +129,10 @@ def save(imgdir, imgname, redraw_axis=True, dot_pdf=True, dot_root=False, dot_c=
 
         tfile = TFile.Open(imgdir+imgname+".root", "RECREATE")
         save_for_root(gPad)
+
+        if additional:
+            for a in additional:
+                a.Write()
         tfile.Close()
     if dot_c:
         gPad.Print(imgdir+imgname+".C")

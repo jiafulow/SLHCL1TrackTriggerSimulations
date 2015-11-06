@@ -94,7 +94,8 @@ int NTupleMaker::writeTree(TString out) {
         chain_->SetBranchStatus("TTClusters_*"   , 0);
         chain_->SetBranchStatus("trkVertices_*"  , 0);
         chain_->SetBranchStatus("simVertices_*"  , 0);
-        chain_->SetBranchStatus("simPixelDigis_*", 0);
+        chain_->SetBranchStatus("mixedSimHits_*" , 0);
+        chain_->SetBranchStatus("pixelDigis_*"   , 0);
     }
 
     TTree* ttree = (TTree*) chain_->CloneTree(0); // Do not copy the data yet

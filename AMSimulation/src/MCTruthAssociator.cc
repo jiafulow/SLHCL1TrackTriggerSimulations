@@ -10,7 +10,7 @@ using namespace slhcl1tt;
 namespace {
 // Comparator
 bool sortByPt(const TrackingParticle& lhs, const TrackingParticle& rhs) {
-    return (1.0/lhs.invPt) > (1.0/rhs.invPt);
+    return (1.0/std::abs(lhs.invPt)) > (1.0/std::abs(rhs.invPt));
 }
 
 bool sortByMatchQuality(const std::pair<unsigned, float>& lhs, const std::pair<unsigned, float>& rhs) {

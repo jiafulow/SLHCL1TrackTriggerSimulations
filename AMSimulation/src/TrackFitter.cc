@@ -27,6 +27,11 @@ unsigned getHitBits(const std::vector<bool>& stubs_bool) {
     default      :  return 7;
     }
 }
+
+// Comparator
+bool sortByPt(const TTTrack2& lhs, const TTTrack2& rhs) {
+    return lhs.pt() > rhs.pt();
+}
 }
 
 
@@ -164,6 +169,8 @@ int TrackFitter::makeTracks(TString src, TString out) {
                 if (verbose_>2)  std::cout << Debug() << "... ... ... track: " << icomb << " status: " << fitstatus << " reduced chi2: " << atrack.chi2Red() << " invPt: " << atrack.invPt() << " phi0: " << atrack.phi0() << " cottheta: " << atrack.cottheta() << " z0: " << atrack.z0() << std::endl;
             }
         }  // loop over the roads
+
+        std::sort(tracks.begin(), tracks.end(), sortByPt);
 
 
         if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " # tracks: " << tracks.size() << std::endl;

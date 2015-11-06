@@ -16,22 +16,22 @@ ntupleSimVertices = cms.EDProducer('NTupleSimVertices',
     maxN = cms.uint32(999999)
 )
 
-#ntuplePSimHitsBarrelLowTof = cms.EDProducer('NTuplePSimHits',
-#    inputTag = cms.InputTag("g4SimHits","TrackerHitsPixelBarrelLowTof"),
-#    prefix = cms.string('psimHitsBarrelLowTof@'),
-#    suffix = cms.string(''),
-#    cut = cms.string(''),
-#    maxN = cms.uint32(999999)
-#)
+ntupleSimHits = cms.EDProducer('NTupleSimHits',
+    inputTag = cms.InputTag('g4SimHits'),
+    simHitCollections = cms.PSet(
+        pixel = cms.VInputTag(
+            cms.InputTag('g4SimHits','TrackerHitsPixelBarrelLowTof'),
+            cms.InputTag('g4SimHits','TrackerHitsPixelBarrelHighTof'),
+            cms.InputTag('g4SimHits','TrackerHitsPixelEndcapLowTof'),
+            cms.InputTag('g4SimHits','TrackerHitsPixelEndcapHighTof'),
+        ),
+    ),
+    prefix = cms.string('simHits@'),
+    suffix = cms.string(''),
+    cut = cms.string(''),
+    maxN = cms.uint32(999999)
+)
 
-#ntuplePSimHitsEndcapLowTof = cms.EDProducer('NTuplePSimHits',
-#    inputTag = cms.InputTag("g4SimHits","TrackerHitsPixelEndcapLowTof"),
-#    prefix = cms.string('psimHitsEndcapLowTof@'),
-#    suffix = cms.string(''),
-#    cut = cms.string(''),
-#    maxN = cms.uint32(999999)
-#)
-
-
+#ntupleSim = cms.Sequence(ntupleSimTracks * ntupleSimVertices * ntupleSimHits)
 ntupleSim = cms.Sequence(ntupleSimTracks * ntupleSimVertices)
 

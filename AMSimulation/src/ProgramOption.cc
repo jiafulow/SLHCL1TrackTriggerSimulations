@@ -60,6 +60,8 @@ std::ostream& operator<<(std::ostream& o, const ProgramOption& po) {
       << "  maxCombs: "     << po.maxCombs
       << "  maxTracks: "    << po.maxTracks
 
+      << "  no_trim: "      << po.no_trim
+
       << "  datadir: "      << po.datadir
       ;
     return o;

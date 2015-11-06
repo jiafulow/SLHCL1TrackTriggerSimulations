@@ -53,6 +53,8 @@ struct ProgramOption {
     int         maxCombs;
     int         maxTracks;
 
+    bool        no_trim;
+
     std::string datadir;
 };
 

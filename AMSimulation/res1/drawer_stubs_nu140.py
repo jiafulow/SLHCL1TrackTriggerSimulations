@@ -78,9 +78,9 @@ def drawer_project(tree, histos, options):
     tree.SetBranchStatus("trkParts_primary", 1)
     tree.SetBranchStatus("TTStubs_modId"   , 1)
 
-    moduleId_set = set()
+    moduleIds_tt = set()
     for moduleId in ttmap[options.tower]:
-        moduleId_set.add(moduleId)
+        moduleIds_tt.add(moduleId)
 
     # Loop over events
     for ievt, evt in enumerate(tree):
@@ -111,7 +111,7 @@ def drawer_project(tree, histos, options):
         lay_map = {}
 
         for istub, moduleId in enumerate(evt.TTStubs_modId):
-            if moduleId not in moduleId_set:
+            if moduleId not in moduleIds_tt:
                 continue
 
             lay = decodeLayer(moduleId)

@@ -87,7 +87,7 @@ def drawer_book(options):
     # Style
     for hname, h in histos.iteritems():
         h.SetLineWidth(2); h.SetFillStyle(0)
-        h.SetMarkerStyle(24); h.SetMarkerSize(0.9)
+        h.SetMarkerStyle(24); h.SetMarkerSize(1)
 
         i = int(hname[-1])
         hname = hname[:-2]
@@ -100,9 +100,9 @@ def drawer_book(options):
 
 
 def drawer_project(tree, histos, options):
-    moduleId_set = set()
+    moduleIds_tt = set()
     for moduleId in ttmap[options.tower]:
-        moduleId_set.add(moduleId)
+        moduleIds_tt.add(moduleId)
 
     tree.SetBranchStatus("*", 0)
     tree.SetBranchStatus("genParts_pt"           , 1)
@@ -196,7 +196,7 @@ def drawer_project(tree, histos, options):
             lay_counts[lay] = 0
 
         for istub, moduleId in enumerate(evt.TTStubs_modId):
-            if moduleId not in moduleId_set:
+            if moduleId not in moduleIds_tt:
                 continue
 
             lay = decodeLayer(moduleId)

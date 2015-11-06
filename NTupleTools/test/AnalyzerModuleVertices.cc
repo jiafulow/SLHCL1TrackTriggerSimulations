@@ -11,13 +11,10 @@
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
 #include "Geometry/TrackerGeometryBuilder/interface/StackedTrackerGeometry.h"
 #include "Geometry/TrackerGeometryBuilder/interface/StackedTrackerDetUnit.h"
-#include "DataFormats/SiPixelDetId/interface/PXBDetId.h"
-#include "DataFormats/SiPixelDetId/interface/PXFDetId.h"
 #include "DataFormats/SiPixelDetId/interface/StackedTrackerDetId.h"
 //#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
-//#include "Geometry/TrackerNumberingBuilder/interface/GeometricDet.h"
 
-#include "SLHCL1TrackTriggerSimulations/NTupleTools/interface/NTupleStubs.h"
+#include "SLHCL1TrackTriggerSimulations/NTupleTools/interface/ModuleIdFunctor.h"
 
 #include <iostream>
 #include <iomanip>
@@ -69,12 +66,10 @@ AnalyzerModuleVertices::~AnalyzerModuleVertices() {}
 // Here we make the layout of the detector
 void AnalyzerModuleVertices::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup) {
     /// Geometry setup
-    /// Set pointers to Geometry
     edm::ESHandle<TrackerGeometry> geometryHandle;
     iSetup.get<TrackerDigiGeometryRecord>().get(geometryHandle);
     theGeometry = geometryHandle.product();
 
-    /// Set pointers to Stacked Modules
     edm::ESHandle<StackedTrackerGeometry> stackedGeometryHandle;
     iSetup.get<StackedTrackerGeometryRecord>().get(stackedGeometryHandle);
     theStackedGeometry = stackedGeometryHandle.product();
@@ -85,6 +80,7 @@ void AnalyzerModuleVertices::beginRun(const edm::Run& iRun, const edm::EventSetu
     moduleId0ToGeoId.clear();
     moduleId1ToGeoId.clear();
 
+    /// Prepare detId -> moduleId
     ModuleIdFunctor getModuleId;
 
     /// Loop over the detector elements

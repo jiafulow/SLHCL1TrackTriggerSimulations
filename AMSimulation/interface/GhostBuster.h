@@ -13,11 +13,14 @@ class GhostBuster {
     // Destructor
     ~GhostBuster() {}
 
+    // Enum
+    enum Flag { BAD=999999999 };
+
     // Is road 2 a ghost of road 1?
-    bool isGhostRoad(const std::vector<unsigned>& superstripIds1, const std::vector<unsigned>& superstripIds2, const unsigned tolerance=1) const;
+    bool isGhostRoad(const std::vector<unsigned>& superstripIds1, const std::vector<unsigned>& superstripIds2, const unsigned threshold=2) const;
 
     // Is track 2 a ghost of track 1?
-    bool isGhostTrack(const std::vector<unsigned>& stubRefs1, const std::vector<unsigned>& stubRefs2, const unsigned tolerance=1) const;
+    bool isGhostTrack(const std::vector<unsigned>& stubRefs1, const std::vector<unsigned>& stubRefs2, const unsigned threshold=2) const;
 
     // Debug
     void print();
