@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
         ("superstrip,s" , po::value<std::string>(&option.superstrip)->default_value("ss256_nz2"), "Specify the superstrip definition (default: ss256_nz2)")
 
         // Track fitting algorithm
-        ("algo,f"       , po::value<std::string>(&option.algo)->default_value("PCA4"), "Select track fitter -- PCA4: PCA fitter 4 params; PCA5: PCA fitter 5 params; ATF4: ATF fitter 4 params; ATF5: ATF fitter 5 params; LTF: Linearized track fitter (default: PCA4)")
+        ("algo,f"       , po::value<std::string>(&option.algo)->default_value("LTF"), "Select track fitter -- PCA4: PCA fitter 4 params; PCA5: PCA fitter 5 params; ATF4: ATF fitter 4 params; ATF5: ATF fitter 5 params; LTF: Linearized track fitter (default: LTF)")
 
         // MC truth
         ("minPt"        , po::value<float>(&option.minPt)->default_value(     2.0), "Specify min pt")
@@ -88,6 +88,9 @@ int main(int argc, char **argv) {
 
         // Only for stub cleaning
         ("picky"        , po::value<int>(&option.picky)->default_value(1), "Specify picky level (default: 1)")
+
+        // Only for stub cleaning and pattern recognition
+        ("removeOverlap", po::bool_switch(&option.removeOverlap)->default_value(false), "remove stubs in overlap regions (default: false)")
 
         // Only for bank generation
         ("minFrequency" , po::value<int>(&option.minFrequency)->default_value(1), "Specify min frequency of a pattern to be stored or read")
@@ -108,6 +111,9 @@ int main(int argc, char **argv) {
         ("maxCombs"     , po::value<int>(&option.maxCombs)->default_value(999999999), "Specfiy max number of combinations per road")
         ("maxTracks"    , po::value<int>(&option.maxTracks)->default_value(999999999), "Specfiy max number of tracks per event")
 
+	// Only for Duplicate Flag
+        ("rmDuplicate", po::value<int>(&option.rmDuplicate)->default_value(-1), "Duplicate removal option. The argument is the number of max stubs allowed to be shared between AM tracks")
+	
         // Only for NTupleMaker
         ("no-trim"      , po::bool_switch(&option.no_trim)->default_value(false), "Do not trim ntuple branches")
         ;

@@ -52,11 +52,11 @@ class MCTruthAssociator {
   private:
 
     // Member data
-    float rms_invPt_;
-    float rms_phi0_;
-    float rms_cottheta_;
-    float rms_z0_;
-    float rms_d0_;
+    //float rms_invPt_;
+    //float rms_phi0_;
+    //float rms_cottheta_;
+    //float rms_z0_;
+    //float rms_d0_;
 
 };
 
