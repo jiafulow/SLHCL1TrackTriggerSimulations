@@ -53,7 +53,10 @@ struct ProgramOption {
     int         maxCombs;
     int         maxTracks;
 
+    int 	rmDuplicate;
+
     bool        no_trim;
+    bool        removeOverlap;
 
     std::string datadir;
 };

@@ -201,8 +201,19 @@ int TrackFitter::makeTracks(TString src, TString out) {
             tracks.resize(po_.maxTracks);
 
 
-        // _____________________________________________________________________
-        // Track categorization
+
+	// ---------------------------------------------------------------------
+	// Classify tracks as duplicates or not (for duplicate removal)
+	// In the algorithm tracking particles are sorted by pT
+	// And AM tracks are sorted by logic and pT
+	// ---------------------------------------------------------------------
+	DuplicateRemoval flagDuplicates;
+	flagDuplicates.CheckTracks(tracks, po_.rmDuplicate);
+
+
+
+
+        // _____________________________________________________________________        // Track categorization
 
         if (po_.speedup<1) {
             const unsigned nparts = reader.vp2_primary->size();
